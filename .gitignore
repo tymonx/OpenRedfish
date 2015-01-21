@@ -2,6 +2,7 @@
 *.a
 *.d
 *.so
+*.bin
 *.out
 *.dll
 *.pdf
