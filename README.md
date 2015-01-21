@@ -5,6 +5,7 @@ Open implementation of Redfish RESTful specification.
 Principal Goals & Scope
 -----------------------
 
+* BSD license
 * Written in modern C++ using C++11 standard
 * Fit for embedded devices that required small footprint
 * Use only POSIX standard for maximum portability between systems
