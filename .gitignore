@@ -1,0 +1,12 @@
+*.o
+*.a
+*.d
+*.so
+*.out
+*.dll
+*.pdf
+*.swp
+*.pyc
+*.html
+.ycm_extra_conf*
+build*/*
