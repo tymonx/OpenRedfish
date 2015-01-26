@@ -146,7 +146,7 @@ static int request_get(void* cls, struct MHD_Connection* connection,
     MHD_add_response_header(response, "Content-Type", JSON_MIME);
 
     /* Response to client */
-    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    ret = MHD_queue_response(connection, message.get_status(), response);
     MHD_destroy_response(response);
 
     return ret;
