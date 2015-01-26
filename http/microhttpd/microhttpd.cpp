@@ -38,11 +38,11 @@
 #include <iostream>
 #define LOGUSR  std::cout
 
-#define log_error(inst, ...)    do {(inst) << __VA_ARGS__;} while(0)
-#define log_debug(inst, ...)    do {(inst) << __VA_ARGS__;} while(0)
+#define log_error(inst, stream)    do {(inst) << stream;} while(0)
+#define log_debug(inst, stream)    do {(inst) << stream;} while(0)
 #else
-#define log_error(inst, ...)    do { } while(0)
-#define log_debug(inst, ...)    do { } while(0)
+#define log_error(inst, stream)    do { } while(0)
+#define log_debug(inst, stream)    do { } while(0)
 #endif
 
 static const char JSON_MIME[] = "application/json";
