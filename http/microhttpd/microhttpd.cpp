@@ -387,10 +387,26 @@ MicroHttpd::~MicroHttpd() {
 }
 
 void MicroHttpd::open(std::string url) {
-    (void)url;
+    size_t pos;
+    uint16_t port = 80;
+
+    pos = url.find_first_not_of("http://");
+    if (std::string::npos == pos) {
+        pos = url.find_first_not_of("https://");
+    }
+
+    pos = url.find_first_of(':', (std::string::npos != pos) ? pos : 0);
+    if (std::string::npos != pos) {
+        size_t count;
+        port = static_cast<uint16_t>(std::stoi(url.substr(pos + 1), &count));
+        url.erase(pos, count + 1);
+    }
 
     log_debug(LOGUSR, "Start daemon\n");
-    m_daemon = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION, 8888,
+    log_debug(LOGUSR, "Url: "  << url  << "\n");
+    log_debug(LOGUSR, "Port: " << port << "\n");
+
+    m_daemon = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION, port,
             NULL, NULL,
             access_handler_callback, this,
             MHD_OPTION_END);

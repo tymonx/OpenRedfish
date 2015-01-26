@@ -30,15 +30,25 @@
  */
 
 #include "server.hpp"
+
+#include <string>
 #include <cstdio>
 #include <iostream>
 
 using namespace std;
 using namespace OpenRedfish::http;
 
-int main(void) {
+static const char* DEFAULT_URL = "http://localhost:8888";
 
-    Server server("http://localhost:8888");
+int main(int argc, char* argv[]) {
+
+    string url = DEFAULT_URL;
+
+    if (argc >= 2) {
+        url = argv[1];
+    }
+
+    Server server(url);
 
     server.support([](Request&) {
             cout << "Unsupported method" << endl;
@@ -54,6 +64,9 @@ int main(void) {
         });
 
     server.open();
+
+    cout << "Starting http server at address: '" << url << "'" << endl;
+    cout << "Hit any key to exit..." << endl;
 
     getchar();
 
