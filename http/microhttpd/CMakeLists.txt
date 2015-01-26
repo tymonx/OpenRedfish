@@ -28,22 +28,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 set(SOURCES
-    server.cpp
+    microhttpd.cpp
 )
 
-add_subdirectory(microhttpd)
+add_library(http_server_adaptee OBJECT ${SOURCES})
 
-add_library(http_server ${SOURCES} $<TARGET_OBJECTS:http_server_adaptee>)
-
-set_target_properties(http_server PROPERTIES
-    COMPILE_FLAGS "-std=c++11 -Wall -Wextra -Wpedantic -fno-exceptions -fno-rtti"
-)
-
-add_executable(example_http_server example_http_server.cpp)
-target_link_libraries(example_http_server
-    http_server
-    microhttpd
-)
-set_target_properties(example_http_server PROPERTIES
+set_target_properties(http_server_adaptee PROPERTIES
     COMPILE_FLAGS "-std=c++11 -Wall -Wextra -Wpedantic -fno-exceptions -fno-rtti"
 )

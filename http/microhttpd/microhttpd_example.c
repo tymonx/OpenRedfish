@@ -35,9 +35,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define GET                 0
-#define POST                1
-
 #define JSON_MIME           "application/json"
 #define JSON_TEST           "{\"Test\": \"simple\"}"
 

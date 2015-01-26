@@ -21,7 +21,15 @@ Create build directory, run cmake and make to build all sources:
     cmake ..
     make
 
-Testing microhttpd:
+Testing microhttpd (fixed port):
 
-    build/http/microhttpd_example 4999
-    curl -XGET localhost:4999
+    build/http/example_http_server
+    curl -XGET localhost:8888
+    curl -XPOST -H "Content-Type: application/json" localhost:8888 -d '{"Test": "test"}'
+
+Issues
+------
+
+* Compiling with g++ -O0 -std=c++11 and linking with library that use pthread,
+  running application after exit crush with segmentation fault (bug). Compile
+  with optimization or with better compiler like clang++
