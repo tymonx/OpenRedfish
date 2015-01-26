@@ -27,6 +27,13 @@ Testing microhttpd (fixed port):
     curl -XGET localhost:8888
     curl -XPOST -H "Content-Type: application/json" localhost:8888 -d '{"Test": "test"}'
 
+Developers
+----------
+
+Recommended flags for cmake:
+
+    cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS='-Werror -Weverything -Wno-padded -Wno-c++98-compat -Wno-c++98-compat-pedantic' ..
+
 Issues
 ------
 
