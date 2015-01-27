@@ -27,12 +27,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 2.8)
-project(OpenRedfish)
+set(SOURCES
+    test.cpp
+)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-add_subdirectory(http)
-add_subdirectory(json)
+add_executable(example_json ${SOURCES})
+set_target_properties(example_json PROPERTIES
+    COMPILE_FLAGS "-std=c++11 -Wall -Wextra -Wpedantic -fno-exceptions -fno-rtti"
+)

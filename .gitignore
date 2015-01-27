@@ -9,5 +9,5 @@
 *.swp
 *.pyc
 *.html
-.ycm_extra_conf*
+.*
 build*/*
