@@ -29,24 +29,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MICROHTTPD_HPP_
-#define _MICROHTTPD_HPP_
+#include "microhttpd.hpp"
 
-#include "../server.hpp"
-
-#include <microhttpd.h>
 #include <string>
+#include <cstdio>
+#include <iostream>
 
-using std::string;
+using namespace std;
+using namespace OpenRedfish::http;
 
-class MicroHttpd : public OpenRedfish::http::Server {
-public:
-    MicroHttpd(const string& url);
-    ~MicroHttpd();
-    void open();
-    void close();
-private:
-    struct MHD_Daemon* m_daemon;
-};
+static const char* DEFAULT_URL = "http://localhost:8888";
 
-#endif /* _MICROHTTPD_HPP_ */
+int main(int argc, char* argv[]) {
+
+    string url = DEFAULT_URL;
+
+    if (argc >= 2) {
+        url = argv[1];
+    }
+
+    Server& server = *new MicroHttpd(url);
+
+    server.support([](const Server::Request&, Server::Response& response) {
+            cout << "Unsupported method" << endl;
+            response.set_reply(404);
+        });
+
+    server.support(Server::Method::GET,
+            [](const Server::Request&, Server::Response& response) {
+            cout << "Method GET" << endl;
+            response.set_reply(200, R"({"Test": "simple"})");
+        });
+
+    server.support(Server::Method::POST,
+            [](const Server::Request& request, Server::Response& response) {
+            cout << "Method POST: " << request.get_message() << endl;
+            response.set_reply(200);
+        });
+
+    server.open();
+
+    cout << "Starting http server at address: '" << url << "'" << endl;
+    cout << "Hit any key to exit..." << endl;
+
+    getchar();
+
+    server.close();
+
+    delete &server;
+
+    return 0;
+}

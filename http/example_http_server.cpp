@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.hpp"
+#include "microhttpd/microhttpd.hpp"
 
 #include <string>
 #include <cstdio>
@@ -48,19 +48,23 @@ int main(int argc, char* argv[]) {
         url = argv[1];
     }
 
-    Server server(url);
+    Server& server = *new MicroHttpd(url);
 
-    server.support([](Request&) {
+    server.support([](const Server::Request&, Server::Response& response) {
             cout << "Unsupported method" << endl;
+            response.set_reply(404);
         });
 
-    server.support(Method::GET, [](Request& message) {
+    server.support(Server::Method::GET,
+            [](const Server::Request&, Server::Response& response) {
             cout << "Method GET" << endl;
-            message.reply(200, R"({"Test": "simple"})");
+            response.set_reply(200, R"({"Test": "simple"})");
         });
 
-    server.support(Method::POST, [](Request& message) {
-            cout << "Method POST: " << message << endl;
+    server.support(Server::Method::POST,
+            [](const Server::Request& request, Server::Response& response) {
+            cout << "Method POST: " << request.get_message() << endl;
+            response.set_reply(200);
         });
 
     server.open();
@@ -71,6 +75,8 @@ int main(int argc, char* argv[]) {
     getchar();
 
     server.close();
+
+    delete &server;
 
     return 0;
 }

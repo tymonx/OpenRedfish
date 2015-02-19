@@ -27,11 +27,38 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 2.8)
-project(OpenRedfish)
+set(SOURCES
+    server.cpp
+    microhttpd.cpp
+    example_http_server.cpp
+)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_CXX_COMPILER clang++)
+add_executable(http_server ${SOURCES})
+target_link_libraries(http_server microhttpd)
 
-add_subdirectory(src)
+if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
+    set_target_properties(http_server PROPERTIES
+        COMPILE_FLAGS
+            -std=c++11
+            -Werror
+            -Weverything
+            -Wno-padded
+            -Wno-c++98-compat
+            -fno-exceptions
+            -fno-rtti
+    )
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
+    set_target_properties(http_server PROPERTIES
+        COMPILE_FLAGS
+            -std=c++11
+            -Werror
+            -Wall
+            -Wextra
+            -Wpedantic
+            -fno-exceptions
+            -fno-rtti
+    )
+endif()

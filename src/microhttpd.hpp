@@ -32,7 +32,7 @@
 #ifndef _MICROHTTPD_HPP_
 #define _MICROHTTPD_HPP_
 
-#include "../server.hpp"
+#include "server.hpp"
 
 #include <microhttpd.h>
 #include <string>

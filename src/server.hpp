@@ -29,24 +29,69 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MICROHTTPD_HPP_
-#define _MICROHTTPD_HPP_
+#ifndef _SERVER_HPP_
+#define _SERVER_HPP_
 
-#include "../server.hpp"
-
-#include <microhttpd.h>
 #include <string>
+
+namespace OpenRedfish {
+namespace http {
 
 using std::string;
 
-class MicroHttpd : public OpenRedfish::http::Server {
+class Server {
 public:
-    MicroHttpd(const string& url);
-    ~MicroHttpd();
-    void open();
-    void close();
+    class Request;
+    class Response;
+
+    typedef void (*MethodCallback)(const Request&, Response&);
+
+    enum Method : unsigned int {
+        POST    = 0,
+        GET     = 1,
+        PUT     = 2,
+        PATCH   = 3,
+        DELETE  = 4,
+        HEAD    = 5
+    };
+
+    Server(const string& url);
+    virtual void open() = 0;
+    virtual void close() = 0;
+    void support(MethodCallback callback);
+    void support(const Method method, MethodCallback callback);
+    void call(const Method method, const Request& request, Response& response);
+    inline const string& get_url() const { return m_url; }
+    virtual ~Server();
+
+    class Request {
+    public:
+        Request(const string& url, const string& message);
+        inline const string& get_url() const { return m_url; }
+        inline const string& get_message() const { return m_message; }
+    private:
+        const string m_url;
+        const string m_message;
+    };
+
+    class Response {
+    public:
+        Response();
+        void set_reply(const unsigned int status, const string& message = "");
+        inline unsigned int get_status() const { return m_status; }
+        inline const string& get_message() const { return m_message; }
+    private:
+        unsigned int m_status;
+        string m_message;
+    };
+protected:
+    string m_url;
 private:
-    struct MHD_Daemon* m_daemon;
+    static constexpr unsigned int MAX_METHODS = 6;
+    MethodCallback m_method_callback[MAX_METHODS];
 };
 
-#endif /* _MICROHTTPD_HPP_ */
+} /* namespace http */
+} /* namespace OpenRedfish */
+
+#endif /* _SERVER_HPP_ */

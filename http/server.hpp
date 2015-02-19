@@ -33,64 +33,63 @@
 #define _SERVER_HPP_
 
 #include <string>
+#include <type_traits>
 
 namespace OpenRedfish {
 namespace http {
 
-enum Method : unsigned int {
-    POST    = 0,
-    GET     = 1,
-    PUT     = 2,
-    PATCH   = 3,
-    DELETE  = 4,
-    HEAD    = 5,
-    MAX     = 6
-};
-
-class Request : public std::string {
-public:
-    Request() : m_status(404) {}
-    void reply(const unsigned int status, const std::string& response) {
-        m_status = status;
-        this->assign(response);
-    }
-    inline unsigned int get_status() {return m_status;}
-    inline std::string get_response() {return static_cast<std::string>(*this);}
-private:
-    unsigned int m_status;
-};
-
-typedef void (*MethodCallback)(Request&);
-
-class ServerAdapter {
-public:
-    virtual void open(std::string) = 0;
-    virtual void close() = 0;
-    virtual void support(MethodCallback) = 0;
-    virtual void support(const Method, MethodCallback) = 0;
-    virtual ~ServerAdapter();
-};
+using std::string;
 
 class Server {
 public:
-    Server();
+    class Request;
+    class Response;
 
-    Server(std::string url);
+    typedef void (*MethodCallback)(const Request&, Response&);
 
-    ~Server();
+    enum Method : unsigned int {
+        POST    = 0,
+        GET     = 1,
+        PUT     = 2,
+        PATCH   = 3,
+        DELETE  = 4,
+        HEAD    = 5
+    };
 
-    void open();
+    Server(const string& url);
+    virtual void open() = 0;
+    virtual void close() = 0;
+    void support(MethodCallback callback);
+    void support(const Method method, MethodCallback callback);
+    void call(const Method method, const Request& request, Response& response);
+    inline const string& get_url() const { return m_url; }
+    virtual ~Server();
 
-    void close();
+    class Request {
+    public:
+        Request(const string& url, const string& message);
+        inline const string& get_url() const { return m_url; }
+        inline const string& get_message() const { return m_message; }
+    private:
+        const string m_url;
+        const string m_message;
+    };
 
-    void support(MethodCallback method_callback);
-
-    void support(const Method method, MethodCallback method_callback);
+    class Response {
+    public:
+        Response();
+        void set_reply(const unsigned int status, const string& message = "");
+        inline unsigned int get_status() const { return m_status; }
+        inline const string& get_message() const { return m_message; }
+    private:
+        unsigned int m_status;
+        string m_message;
+    };
+protected:
+    string m_url;
 private:
-    static ServerAdapter* create_server();
-
-    std::string m_url;
-    ServerAdapter* m_impl;
+    static constexpr unsigned int MAX_METHODS = 6;
+    MethodCallback m_method_callback[MAX_METHODS];
 };
 
 } /* namespace http */
