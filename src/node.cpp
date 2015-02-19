@@ -29,30 +29,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OPEN_REDFISH_MICROHTTPD_HPP_
-#define _OPEN_REDFISH_MICROHTTPD_HPP_
+#include "node.hpp"
 
-#include "server.hpp"
+using namespace OpenRedfish;
 
-#include <microhttpd.h>
-#include <string>
-
-namespace OpenRedfish {
-namespace http {
-
-using std::string;
-
-class MicroHttpd : public OpenRedfish::http::Server {
-public:
-    MicroHttpd(const string& url);
-    ~MicroHttpd();
-    void open();
-    void close();
-private:
-    struct MHD_Daemon* m_daemon;
-};
+Node::Node(const string& name) : m_name(name) {
 
 }
+
+void Node::get(Json::Value&) {
+
 }
 
-#endif /* _OPEN_REDFISH_MICROHTTPD_HPP_ */
+void Node::patch(const Json::Value&, Json::Value&) {
+
+}
+
+void Node::put(const Json::Value&, Json::Value&) {
+
+}
+
+void Node::post(const Json::Value&, Json::Value&) {
+
+}
+
+void Node::del(const Json::Value&, Json::Value&) {
+
+}
+
+void Node::head(const Json::Value&, Json::Value&) {
+
+}
+
+void Node::add_node(Node* node) {
+    m_nodes[node->m_name].reset(node);
+}
+
+Node::~Node() { }

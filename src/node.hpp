@@ -29,69 +29,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OPEN_REDFISH_SERVER_HPP_
-#define _OPEN_REDFISH_SERVER_HPP_
+#ifndef _OPEN_REDFISH_NODE_HPP_
+#define _OPEN_REDFISH_NODE_HPP_
 
+#include <jsoncpp/json/json.h>
+#include <vector>
 #include <string>
+#include <memory>
+#include <map>
 
 namespace OpenRedfish {
-namespace http {
 
+using std::map;
+using std::vector;
 using std::string;
+using std::unique_ptr;
 
-class Server {
+class Node {
 public:
-    class Request;
-    class Response;
+    Node(const string& name);
+    virtual void get(Json::Value& result);
+    virtual void patch(const Json::Value& request, Json::Value& response);
+    virtual void put(const Json::Value& request, Json::Value& response);
+    virtual void post(const Json::Value& request, Json::Value& response);
+    virtual void del(const Json::Value& request, Json::Value& response);
+    virtual void head(const Json::Value& request, Json::Value& response);
 
-    typedef void (*MethodCallback)(const Request&, Response&);
+    virtual ~Node();
 
-    enum Method : unsigned int {
-        POST    = 0,
-        GET     = 1,
-        PUT     = 2,
-        PATCH   = 3,
-        DELETE  = 4,
-        HEAD    = 5
-    };
-
-    Server(const string& url);
-    virtual void open() = 0;
-    virtual void close() = 0;
-    void support(MethodCallback callback);
-    void support(const Method method, MethodCallback callback);
-    void call(const Method method, const Request& request, Response& response);
-    inline const string& get_url() const { return m_url; }
-    virtual ~Server();
-
-    class Request {
-    public:
-        Request(const string& url, const string& message = "");
-        inline const string& get_url() const { return m_url; }
-        inline const string& get_message() const { return m_message; }
-    private:
-        const string m_url;
-        const string m_message;
-    };
-
-    class Response {
-    public:
-        Response();
-        void set_reply(const unsigned int status, const string& message = "");
-        inline unsigned int get_status() const { return m_status; }
-        inline const string& get_message() const { return m_message; }
-    private:
-        unsigned int m_status;
-        string m_message;
-    };
-protected:
-    string m_url;
+    void add_node(Node* node);
 private:
-    static constexpr unsigned int MAX_METHODS = 6;
-    MethodCallback m_method_callback[MAX_METHODS];
+    string m_name;
+    map<string, unique_ptr<Node>> m_nodes{};
 };
 
-} /* namespace http */
-} /* namespace OpenRedfish */
+}
 
-#endif /* _OPEN_REDFISH_SERVER_HPP_ */
+#endif /* _OPEN_REDFISH_NODE_HPP_ */

@@ -29,30 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OPEN_REDFISH_MICROHTTPD_HPP_
-#define _OPEN_REDFISH_MICROHTTPD_HPP_
+#include "root.hpp"
 
-#include "server.hpp"
+using namespace OpenRedfish::root;
 
-#include <microhttpd.h>
-#include <string>
-
-namespace OpenRedfish {
-namespace http {
-
-using std::string;
-
-class MicroHttpd : public OpenRedfish::http::Server {
-public:
-    MicroHttpd(const string& url);
-    ~MicroHttpd();
-    void open();
-    void close();
-private:
-    struct MHD_Daemon* m_daemon;
-};
-
-}
-}
-
-#endif /* _OPEN_REDFISH_MICROHTTPD_HPP_ */
+Root::Root() : Node("root") { }

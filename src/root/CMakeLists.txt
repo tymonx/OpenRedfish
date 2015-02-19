@@ -28,38 +28,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 set(SOURCES
-    server.cpp
-    microhttpd.cpp
-    example_http_server.cpp
+    root.cpp
 )
 
-add_subdirectory(root)
-
-add_executable(http_server ${SOURCES})
-target_link_libraries(http_server microhttpd root)
-
-if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
-    set_target_properties(http_server PROPERTIES
-        COMPILE_FLAGS
-            -std=c++11
-            -Werror
-            -Weverything
-            -Wno-padded
-            -Wno-c++98-compat
-            -fno-exceptions
-            -fno-rtti
-    )
-endif()
-
-if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-    set_target_properties(http_server PROPERTIES
-        COMPILE_FLAGS
-            -std=c++11
-            -Werror
-            -Wall
-            -Wextra
-            -Wpedantic
-            -fno-exceptions
-            -fno-rtti
-    )
-endif()
+add_library(root STATIC ${SOURCES})
+target_include_directories(node PUBLIC ${OPEN_REDFISH_DIR}/src)
