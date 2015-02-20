@@ -29,7 +29,11 @@
 
 set(SOURCES
     root.cpp
+    rest.cpp
+    version.cpp
+    drawers.cpp
+    modules.cpp
 )
 
-add_library(root STATIC ${SOURCES})
-target_include_directories(node PUBLIC ${OPEN_REDFISH_DIR}/src)
+add_library(openredfish-nodes STATIC ${SOURCES})
+target_include_directories(openredfish-nodes PUBLIC ${OPEN_REDFISH_DIR}/src)

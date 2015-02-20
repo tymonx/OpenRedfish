@@ -33,11 +33,18 @@
 
 using namespace OpenRedfish;
 
-Node::Node(const string& name) : m_name(name) {
+static const char ROOT[] = "";
+
+Node::Node(const string& name) :
+    m_name(name),
+    m_back(nullptr),
+    m_nodes() { }
+
+void Node::get(Json::Value&) {
 
 }
 
-void Node::get(Json::Value&) {
+void Node::del(Json::Value&) {
 
 }
 
@@ -53,16 +60,78 @@ void Node::post(const Json::Value&, Json::Value&) {
 
 }
 
-void Node::del(const Json::Value&, Json::Value&) {
-
-}
-
 void Node::head(const Json::Value&, Json::Value&) {
 
 }
 
 void Node::add_node(Node* node) {
-    m_nodes[node->m_name].reset(node);
+    if (nullptr != node) {
+        node->m_back = this;
+        m_nodes[node->m_name].reset(node);
+    }
+}
+
+void Node::erase(Node* node) {
+    if (ROOT != node->m_name) {
+        node->get_back()->m_nodes.erase(node->m_name);
+    }
+}
+
+Node* Node::get_node(const string& path) {
+    if (0 == path.size()) {
+        return this;
+    }
+
+    Node* node = this;
+    string node_path(path);
+
+    if ('/' == node_path[0]) {
+        node = get_root();
+        node_path.erase(0, 1);
+    }
+
+    if (0 != node_path.size()) {
+        if ('/' != node_path.back()) {
+            node_path.push_back('/');
+        }
+    }
+
+    string token;
+    for (const auto c : node_path) {
+        if ('/' == c) {
+            node = node->m_nodes.at(token).get();
+            token.clear();
+        } else {
+            token += c;
+        }
+    }
+
+    return node;
+}
+
+Node* Node::get_root() {
+    Node* node = this;
+    while (ROOT != node->m_name) {
+        node = node->m_back;
+    }
+    return node;
+}
+
+Node* Node::get_next() {
+    return m_nodes.begin()->second.get();
+}
+
+string Node::get_path() const {
+    string path;
+
+    const Node* node = this;
+
+    while (ROOT != node->m_name) {
+        path = "/" + node->get_name() + path;
+        node = node->m_back;
+    }
+
+    return path;
 }
 
 Node::~Node() { }

@@ -29,20 +29,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OPEN_REDFISH_ROOT_HPP_
-#define _OPEN_REDFISH_ROOT_HPP_
+#include "drawers.hpp"
+#include "modules.hpp"
 
-#include "node.hpp"
+#include <string>
 
-namespace OpenRedfish {
-namespace root {
+using std::to_string;
+using namespace OpenRedfish::node;
 
-class Root : public Node {
-public:
-    Root();
-};
-
-}
+Drawers::Drawers() : Node("Drawers") {
+    add_node(new Drawers::Drawer);
+    add_node(new Drawers::Drawer);
 }
 
-#endif /* _OPEN_REDFISH_ROOT_HPP_ */
+void Drawers::get(Json::Value& response) {
+    response["@odata.id"] = get_path();
+    response["Name"] = "Drawers Collection";
+
+    response["Links"]["Members@odata.count"] = unsigned(size());
+    response["Links"]["Members"] = Json::arrayValue;
+
+    Json::Value member;
+    for (const auto& child_node : *this) {
+        member["@odata.id"] = child_node.get_path();
+        response["Links"]["Members"].append(std::move(member));
+    }
+}
+
+Drawers::~Drawers() { }
+
+std::atomic_uint Drawers::Drawer::id(1);
+
+Drawers::Drawer::Drawer() : Node(to_string(id++)) {
+    add_node(new Modules);
+}
+
+void Drawers::Drawer::get(Json::Value& response) {
+    response["@odata.id"] = get_path();
+    response["Id"] = get_name();
+    response["Name"] = "My Goodie Drawer";
+    response["Description"] = "test";
+    response["Links"]["Modules"]["@odata.id"] = get_next()->get_path();
+}
+
+Drawers::Drawer::~Drawer() { }

@@ -29,6 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "node/root.hpp"
+
+#include "jsoncpp/json/reader.h"
 #include "microhttpd.hpp"
 
 #include <string>
@@ -36,6 +39,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace OpenRedfish;
 using namespace OpenRedfish::http;
 
 static const char* DEFAULT_URL = "http://localhost:8888";
@@ -48,6 +52,8 @@ int main(int argc, char* argv[]) {
         url = argv[1];
     }
 
+    node::Root root;
+
     Server& server = *new MicroHttpd(url);
 
     server.support([](const Server::Request&, Server::Response& response) {
@@ -56,15 +62,71 @@ int main(int argc, char* argv[]) {
         });
 
     server.support(Server::Method::GET,
-            [](const Server::Request&, Server::Response& response) {
-            cout << "Method GET" << endl;
-            response.set_reply(200, R"({"Test": "simple"})");
+            [&root](const Server::Request& request, Server::Response& response) {
+
+            try {
+                Node* node = root.get_node(request.get_url());
+
+                Json::Value json_response{};
+
+                node->get(json_response);
+
+                response.set_reply(200, json_response.toStyledString());
+            } catch (...) {
+                response.set_reply(405);
+            }
+        });
+
+    server.support(Server::Method::DELETE,
+            [&root](const Server::Request& request, Server::Response& response) {
+
+            try {
+                Node* node = root.get_node(request.get_url());
+
+                Json::Value json_response{};
+
+                node->del(json_response);
+
+                response.set_reply(200, json_response.toStyledString());
+            } catch (...) {
+                response.set_reply(405);
+            }
         });
 
     server.support(Server::Method::POST,
-            [](const Server::Request& request, Server::Response& response) {
-            cout << "Method POST: " << request.get_message() << endl;
-            response.set_reply(200);
+            [&root](const Server::Request& request, Server::Response& response) {
+            try {
+                Node* node = root.get_node(request.get_url());
+
+                Json::Value json_request{};
+                Json::Value json_response{};
+                Json::Reader reader;
+                reader.parse(request.get_message(), json_request);
+
+                node->post(json_request, json_response);
+
+                response.set_reply(200, json_response.toStyledString());
+            } catch (...) {
+                response.set_reply(405);
+            }
+        });
+
+    server.support(Server::Method::PATCH,
+            [&root](const Server::Request& request, Server::Response& response) {
+            try {
+                Node* node = root.get_node(request.get_url());
+
+                Json::Value json_request{};
+                Json::Value json_response{};
+                Json::Reader reader;
+                reader.parse(request.get_message(), json_request);
+
+                node->patch(json_request, json_response);
+
+                response.set_reply(200, json_response.toStyledString());
+            } catch (...) {
+                response.set_reply(405);
+            }
         });
 
     server.open();

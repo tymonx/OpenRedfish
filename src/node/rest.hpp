@@ -29,8 +29,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "root.hpp"
+#ifndef _OPEN_REDFISH_NODE_REST_HPP_
+#define _OPEN_REDFISH_NODE_REST_HPP_
 
-using namespace OpenRedfish::root;
+#include "node.hpp"
 
-Root::Root() : Node("root") { }
+namespace OpenRedfish {
+namespace node {
+
+class Rest : public Node {
+public:
+    Rest(const string& name);
+    ~Rest();
+};
+
+}
+}
+
+#endif /* _OPEN_REDFISH_NODE_REST_HPP_ */

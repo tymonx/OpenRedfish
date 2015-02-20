@@ -41,6 +41,7 @@
 namespace OpenRedfish {
 
 using std::map;
+using std::pair;
 using std::vector;
 using std::string;
 using std::unique_ptr;
@@ -49,18 +50,47 @@ class Node {
 public:
     Node(const string& name);
     virtual void get(Json::Value& result);
+    virtual void del(Json::Value& response);
+    virtual void post(const Json::Value& request, Json::Value& response);
     virtual void patch(const Json::Value& request, Json::Value& response);
     virtual void put(const Json::Value& request, Json::Value& response);
-    virtual void post(const Json::Value& request, Json::Value& response);
-    virtual void del(const Json::Value& request, Json::Value& response);
     virtual void head(const Json::Value& request, Json::Value& response);
 
     virtual ~Node();
 
     void add_node(Node* node);
+    void erase(Node* node);
+    Node* get_node(const string& name);
+    Node* get_root();
+    Node* get_next();
+    inline Node* get_back() { return m_back; }
+    inline size_t size() const { return m_nodes.size(); }
+    string get_path() const;
+    inline const string& get_name() const { return m_name; }
+
+    class Iterator {
+    public:
+       Iterator(const map<string, unique_ptr<Node>>::iterator& it) :
+           m_iterator(it) { }
+       inline Node& operator*() const { return *(*m_iterator).second.get(); }
+       inline Iterator& operator++() { m_iterator++; return *this; }
+       inline bool operator!=(const Iterator& it) const {
+           return m_iterator != it.m_iterator;
+       }
+    private:
+       map<string, unique_ptr<Node>>::iterator m_iterator;
+    };
+
+    inline Iterator begin() { return {m_nodes.begin()}; }
+    inline Iterator end() { return {m_nodes.end()}; }
+
+    friend class Iterator;
 private:
+    Node(const Node&) = delete;
+    Node& operator=(const Node&) = delete;
     string m_name;
-    map<string, unique_ptr<Node>> m_nodes{};
+    Node* m_back;
+    map<string, unique_ptr<Node>> m_nodes;
 };
 
 }

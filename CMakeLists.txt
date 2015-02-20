@@ -30,8 +30,35 @@
 cmake_minimum_required(VERSION 2.8)
 project(OpenRedfish)
 
-set(CMAKE_CXX_COMPILER clang++)
 set(OPEN_REDFISH_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
+    set(CMAKE_CXX_FLAGS
+        -std=c++11
+        -Os
+        -Werror
+        -Weverything
+        -Wno-padded
+        -Wno-c++98-compat
+        -fno-rtti
+        ${CMAKE_CXX_FLAGS}
+    )
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
+    set(CMAKE_CXX_FLAGS
+        -std=c++11
+        -Os
+        -Werror
+        -Wall
+        -Wextra
+        -Wpedantic
+        -fno-rtti
+        ${CMAKE_CXX_FLAGS}
+    )
+endif()
+
+string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

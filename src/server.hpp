@@ -33,6 +33,7 @@
 #define _OPEN_REDFISH_SERVER_HPP_
 
 #include <string>
+#include <functional>
 
 namespace OpenRedfish {
 namespace http {
@@ -44,7 +45,7 @@ public:
     class Request;
     class Response;
 
-    typedef void (*MethodCallback)(const Request&, Response&);
+    typedef std::function<void(const Request&, Response&)> MethodCallback;
 
     enum Method : unsigned int {
         POST    = 0,

@@ -44,7 +44,7 @@
 #define log_debug(inst, stream)    do { } while(0)
 #endif
 
-using OpenRedfish::http::Server;
+using namespace OpenRedfish::http;
 
 static const char JSON_MIME[] = "application/json";
 
@@ -85,7 +85,7 @@ static int request_post(void* cls, struct MHD_Connection* connection,
         Server::Request request(url, con_info->message);
         Server::Response response;
         static_cast<MicroHttpd*>(cls)->call(
-                Server::Method::GET, request, response);
+                Server::Method::POST, request, response);
 
         delete con_info;
         *con_cls = NULL;
@@ -201,18 +201,39 @@ static int request_patch(void* cls, struct MHD_Connection* connection,
     (void)url;
     (void)method;
     (void)version;
-    (void)upload_data;
-    (void)upload_data_size;
+
+    struct connection_info* con_info =
+        static_cast<struct connection_info*>(*con_cls);
+
+    if (NULL == con_info) {
+        log_debug(LOGUSR, "Create connection info\n");
+        con_info = new struct connection_info;
+        if (NULL == con_info) {
+            return MHD_NO;
+        }
+        *con_cls = con_info;
+        return MHD_YES;
+    }
+
+    if (0 != *upload_data_size) {
+        con_info->message.append(upload_data, *upload_data_size);
+        *upload_data_size = 0;
+        return MHD_YES;
+    } else {
+        log_debug(LOGUSR, "Data size:" << con_info->message.length() << "\n");
+        log_debug(LOGUSR, "Data: " << con_info->message << "\n");
+
+        Server::Request request(url, con_info->message);
+        Server::Response response;
+        static_cast<MicroHttpd*>(cls)->call(
+                Server::Method::PATCH, request, response);
+
+        delete con_info;
+        *con_cls = NULL;
+    }
 
     struct MHD_Response* mhd_response;
     int ret;
-
-    *con_cls = NULL;
-
-    Server::Request request(url, "");
-    Server::Response response;
-    static_cast<MicroHttpd*>(cls)->call(
-            Server::Method::PATCH, request, response);
 
     /* Create response */
     mhd_response = MHD_create_response_from_buffer(0, NULL,
@@ -224,7 +245,8 @@ static int request_patch(void* cls, struct MHD_Connection* connection,
     }
 
     /* Response to client */
-    ret = MHD_queue_response(connection, MHD_HTTP_OK, mhd_response);
+    ret = MHD_queue_response(connection, MHD_HTTP_NO_CONTENT,
+            mhd_response);
     MHD_destroy_response(mhd_response);
 
     return ret;
