@@ -24,7 +24,7 @@ Create build directory, run cmake and make to build all sources:
 Testing microhttpd (fixed port):
 
     build/bin/http_server
-    curl -XGET localhost:8888
+    curl -XGET localhost:8888/rest/v1
     curl -XPOST -H "Content-Type: application/json" -d '{"Name": "xxx", "Version": "1.1"}' localhost:8888/rest/v1/Drawers/2/Modules/
 
 Developers
