@@ -31,6 +31,8 @@
 
 #include "node.hpp"
 
+#include <exception>
+
 using namespace OpenRedfish;
 
 static const char ROOT[] = "";
@@ -41,27 +43,27 @@ Node::Node(const string& name) :
     m_nodes() { }
 
 void Node::get(Json::Value&) {
-
+    throw std::exception();
 }
 
 void Node::del(Json::Value&) {
-
+    throw std::exception();
 }
 
 void Node::patch(const Json::Value&, Json::Value&) {
-
+    throw std::exception();
 }
 
 void Node::put(const Json::Value&, Json::Value&) {
-
+    throw std::exception();
 }
 
 void Node::post(const Json::Value&, Json::Value&) {
-
+    throw std::exception();
 }
 
 void Node::head(const Json::Value&, Json::Value&) {
-
+    throw std::exception();
 }
 
 void Node::add_node(Node* node) {
