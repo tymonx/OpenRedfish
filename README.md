@@ -25,7 +25,9 @@ Testing microhttpd (fixed port):
 
     build/bin/http_server
     curl -XGET localhost:8888/rest/v1
+    curl -XDELETE localhost:8888/rest/v1/Drawers/2/Modules/2
     curl -XPOST -H "Content-Type: application/json" -d '{"Name": "xxx", "Version": "1.1"}' localhost:8888/rest/v1/Drawers/2/Modules/
+    curl -XPATCH -H "Content-Type: application/json" -d '{"Name": "xxx", "Version": "1.1"}' localhost:8888/rest/v1/Drawers/2/Modules/2
 
 Developers
 ----------
