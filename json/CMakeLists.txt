@@ -29,9 +29,7 @@
 
 set(SOURCES
     test.cpp
+    json.cpp
 )
 
-add_executable(example_json ${SOURCES})
-set_target_properties(example_json PROPERTIES
-    COMPILE_FLAGS "-std=c++11 -Wall -Wextra -Wpedantic -fno-exceptions -fno-rtti"
-)
+add_executable(json ${SOURCES})

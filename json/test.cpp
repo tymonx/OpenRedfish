@@ -31,10 +31,29 @@
 
 #include "json.hpp"
 
+#include <iostream>
+
+using namespace std;
+
 int main(void) {
 
-    json::Value val;
-    (void)val;
+    json::Value val("Test");
+
+    cout << std::string(val) << endl;
+
+    val = json::Value(true);
+
+    cout << bool(val) << endl;
+
+    val = nullptr;
+
+    cout << (val != nullptr) << endl;
+
+    val = -32000;
+
+    cout << int16_t(val.type()) << endl;
+    cout << int16_t(val) << endl;
+    cout << (val == -32000) << endl;
 
     return 0;
 }

@@ -40,6 +40,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
         -Weverything
         -Wno-padded
         -Wno-c++98-compat
+        -Wno-c++98-compat-pedantic
         -fno-rtti
         ${CMAKE_CXX_FLAGS}
     )
@@ -65,3 +66,4 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(src)
+add_subdirectory(json)
