@@ -78,13 +78,9 @@ public:
 
     Value(const std::string& key, const Value& value);
 
-    Value(uint16_t value);
-
     Value(uint32_t value);
 
     Value(uint64_t value);
-
-    Value(int16_t value);
 
     Value(int32_t value);
 
@@ -97,6 +93,8 @@ public:
     ~Value();
 
     Value& operator=(const Value& value);
+
+    void push_back(const Value& value);
 
     size_t size() const;
 
@@ -120,13 +118,9 @@ public:
 
     explicit operator std::nullptr_t() const;
 
-    explicit operator int16_t() const;
-
     explicit operator int32_t() const;
 
     explicit operator int64_t() const;
-
-    explicit operator uint16_t() const;
 
     explicit operator uint32_t() const;
 
@@ -146,13 +140,9 @@ public:
 
     bool operator==(std::nullptr_t empty) const;
 
-    bool operator==(int16_t value) const;
-
     bool operator==(int32_t value) const;
 
     bool operator==(int64_t value) const;
-
-    bool operator==(uint16_t value) const;
 
     bool operator==(uint32_t value) const;
 
@@ -192,13 +182,9 @@ private:
 
         Number() : m_type(Type::INT), m_int(0) { }
 
-        Number(int16_t value) : m_type(Type::INT), m_int(value) { }
-
         Number(int32_t value) : m_type(Type::INT), m_int(value) { }
 
         Number(int64_t value) : m_type(Type::INT), m_int(value) { }
-
-        Number(uint16_t value) : m_type(Type::UINT), m_uint(value) { }
 
         Number(uint32_t value) : m_type(Type::UINT), m_uint(value) { }
 
@@ -221,8 +207,6 @@ private:
             uint64_t m_uint;
             double m_double;
         };
-
-        void assert_range(int64_t min, uint64_t max) const;
     };
 
     using Object = std::vector<KeyValue>;

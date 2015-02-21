@@ -48,44 +48,7 @@
 
 using namespace json;
 
-void Value::Number::assert_range(int64_t min, uint64_t max) const {
-    switch(m_type) {
-    case Type::INT:
-        if (std::signbit(m_int)) {
-            if (m_int < min) {
-                throw std::underflow_error("Underflow");
-            }
-        } else {
-            if (uint64_t(m_int) > max) {
-                throw std::overflow_error("Overflow");
-            }
-        }
-        break;
-    case Type::UINT:
-        if (m_uint > max) {
-            throw std::overflow_error("Overflow");
-        }
-        break;
-    case Type::DOUBLE:
-        if (std::signbit(m_double)) {
-            if (int64_t(m_double) < min) {
-                throw std::underflow_error("Underflow");
-            }
-        } else {
-            if (uint64_t(m_double) > max) {
-                throw std::overflow_error("Overflow");
-            }
-        }
-        break;
-    default:
-        break;
-    }
-}
-
 template<typename T> Value::Number::operator T() const {
-    assert_range(int64_t(std::numeric_limits<T>::min()),
-                uint64_t(std::numeric_limits<T>::max()));
-
     T value;
 
     switch(m_type) {
@@ -106,17 +69,12 @@ template<typename T> Value::Number::operator T() const {
     return value;
 }
 
-template Value::Number::operator int16_t() const;
 template Value::Number::operator int32_t() const;
 template Value::Number::operator int64_t() const;
-template Value::Number::operator uint16_t() const;
 template Value::Number::operator uint32_t() const;
 template Value::Number::operator uint64_t() const;
 
 Value::Number::operator double() const {
-    assert_range(int64_t(std::numeric_limits<double>::min()),
-                uint64_t(std::numeric_limits<double>::max()));
-
     double value;
 
     switch(m_type) {
@@ -164,19 +122,11 @@ Value::Value(const std::string& key, const Value& value) :
     new (&m_object) Object{std::make_pair(key, value)};
 }
 
-Value::Value(uint16_t value) : m_type(Type::NUMBER) {
-    new (&m_number) Number(value);
-}
-
 Value::Value(uint32_t value) : m_type(Type::NUMBER) {
     new (&m_number) Number(value);
 }
 
 Value::Value(uint64_t value) : m_type(Type::NUMBER) {
-    new (&m_number) Number(value);
-}
-
-Value::Value(int16_t value) : m_type(Type::NUMBER) {
     new (&m_number) Number(value);
 }
 
@@ -366,7 +316,12 @@ Value& Value::Value::operator[](size_t index) {
     Value* value;
 
     if (Type::ARRAY == m_type) {
-        value = &m_array[index];
+        if (m_array.size() == index) {
+            m_array.emplace_back(std::move(Value()));
+            value = &m_array.back();
+        } else {
+            value = &m_array[index];
+        }
     } else {
         value = &m_object[index].second;
     }
@@ -386,6 +341,11 @@ const Value& Value::Value::operator[](size_t index) const {
     }
 
     return *value;
+}
+
+void Value::push_back(const Value& value) {
+    assert_type(Type::ARRAY);
+    m_array.push_back(value);
 }
 
 bool Value::operator==(const Value& value) const {
@@ -440,24 +400,9 @@ Value::operator std::nullptr_t() const {
     return nullptr;
 }
 
-Value::operator int16_t() const {
-    assert_type(Type::NUMBER);
-    return int16_t(m_number);
-}
-
 Value::operator int32_t() const {
     assert_type(Type::NUMBER);
     return int32_t(m_number);
-}
-
-Value::operator int64_t() const {
-    assert_type(Type::NUMBER);
-    return int64_t(m_number);
-}
-
-Value::operator uint16_t() const {
-    assert_type(Type::NUMBER);
-    return uint16_t(m_number);
 }
 
 Value::operator uint32_t() const {
@@ -495,11 +440,6 @@ bool Value::operator==(std::nullptr_t empty) const {
     return (empty == nullptr);
 }
 
-bool Value::operator==(int16_t value) const {
-    assert_type(Type::NUMBER);
-    return int16_t(m_number) == value;
-}
-
 bool Value::operator==(int32_t value) const {
     assert_type(Type::NUMBER);
     return int32_t(m_number) == value;
@@ -508,11 +448,6 @@ bool Value::operator==(int32_t value) const {
 bool Value::operator==(int64_t value) const {
     assert_type(Type::NUMBER);
     return int64_t(m_number) == value;
-}
-
-bool Value::operator==(uint16_t value) const {
-    assert_type(Type::NUMBER);
-    return uint16_t(m_number) == value;
 }
 
 bool Value::operator==(uint32_t value) const {

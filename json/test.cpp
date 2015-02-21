@@ -51,8 +51,8 @@ int main(void) {
 
     val = -32000;
 
-    cout << int16_t(val.type()) << endl;
-    cout << int16_t(val) << endl;
+    cout << int32_t(val.type()) << endl;
+    cout << int32_t(val) << endl;
     cout << (val == -32000) << endl;
 
     return 0;
