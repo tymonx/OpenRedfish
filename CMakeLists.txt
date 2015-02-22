@@ -51,6 +51,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
     set(CMAKE_CXX_FLAGS
         -std=c++11
         -Os
+        -ffunction-sections
+        -fdata-sections
         -Werror
         -Wall
         -Wextra
@@ -58,6 +60,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
         -fno-rtti
         ${CMAKE_CXX_FLAGS}
     )
+    set(CMAKE_EXE_LINKER_FLAGS -Wl,--gc-sections)
 endif()
 
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
