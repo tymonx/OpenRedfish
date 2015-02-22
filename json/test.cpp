@@ -105,12 +105,20 @@ int main(void) {
     val2["key8"] = json::Value(5, nullptr);
     val2["key8"].assign(5, true);
 
+    json::Value val3 = {
+        Pair{"key1", 1},
+        Pair{"key1", "test"}, // override previous key:value
+        Pair{"key2", {-7, 2, "Text a"}},
+        Pair{"key3", {2, true, nullptr}}
+    };
+
     cout << "Size: " << sizeof(json::Value) << endl;
     cout << "Serializer: " << json::Serializer(val) << endl;
     cout << "Serializer: " << json::Serializer(val2) << endl;
     val.swap(val2);
     cout << "Serializer: " << json::Serializer(val) << endl;
     cout << "Serializer: " << json::Serializer(val2) << endl;
+    cout << "Serializer: " << json::Serializer(val3) << endl;
 
     for (const auto& data : val) {
         cout << "Foreach type: " << int(data.type()) << endl;
