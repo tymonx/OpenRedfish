@@ -89,7 +89,8 @@ int main(void) {
 
     json::Serializer serializer;
 
-    serializer << val;
+    serializer << val << val << val;
+    cout << "Serializer: " << json::Serializer(val) << endl;
     cout << "Serializer: " << serializer << endl;
 
     for (const auto& data : val) {
