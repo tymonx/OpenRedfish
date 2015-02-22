@@ -67,10 +67,10 @@ int main(void) {
 
     val = nullptr;
 
-    val.append(nullptr)["test"] = 5;
-    val.append(6);
-    val.append("Hello");
-    val.append(val);
+    val.push_back(nullptr);
+    val.push_back(6);
+    val.push_back("Hello");
+    val.push_back(val);
 
     cout << val.size() << endl;
     cout << int32_t(val[0]["test"].size()) << endl;
@@ -83,19 +83,30 @@ int main(void) {
     val["key1"] = 4;
     val["key2"];
     val["key3"] = -2;
-    val["key4"].append(json::Value::Pair("subtest1", 5));
-    val["key4"].append(json::Value::Pair("subtest2", true));
+    val["key4"].push_back(json::Value::Pair("subtest1", 5));
+    val["key4"].push_back(json::Value::Pair("subtest2", true));
     val["key5"]["inkey4"] = "Test1";
     val["key5"]["inkey5"] = "Test2";
 
-    json::Serializer serializer;
+    json::Value val2 = nullptr;
+    val2["key1"] = 5;
+    val2["key2"];
+    val2["key3"] = -7;
+    val2["key4"].push_back(json::Value::Pair("subtest1", 5));
+    val2["key4"].push_back(json::Value::Pair("subtest2", true));
+    val2["key5"]["inkey4"] = "Test1";
+    val2["key5"]["inkey5"] = "Test2";
+    val2["key6"][0] = 3;
+    val2["key6"][1] = 2;
+    val2["key6"][2] = 1;
+    val2["key6"][3] = 0;
 
-    serializer << val << val << val;
-    Json::Value test;
     cout << "Size: " << sizeof(json::Value) << endl;
-    cout << "Size: " << sizeof(test) << endl;
     cout << "Serializer: " << json::Serializer(val) << endl;
-    cout << "Serializer: " << serializer << endl;
+    cout << "Serializer: " << json::Serializer(val2) << endl;
+    val.swap(val2);
+    cout << "Serializer: " << json::Serializer(val) << endl;
+    cout << "Serializer: " << json::Serializer(val2) << endl;
 
     for (const auto& data : val) {
         cout << "Foreach type: " << int(data.type()) << endl;

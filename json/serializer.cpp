@@ -48,24 +48,24 @@
 using namespace json;
 
 Serializer& Serializer::operator<<(const Value& value) {
-    if ((Value::Type::OBJECT != value.type()) &&
+    if ((Value::Type::MEMBERS != value.type()) &&
         (Value::Type::EMPTY != value.type())) {
         throw std::domain_error("Invalid JSON type");
     }
 
-    write_object(value);
+    write_members(value);
 
     return *this;
 }
 
-void Serializer::write_object(const Value& value) {
+void Serializer::write_members(const Value& value) {
     m_serialized += '{';
 
     if (value.size() > 0) {
-        for (auto it = value.cbegin(); it != value.cend(); it++) {
-            write_string(it.key());
+        for (const auto& pair : Value::Members(value)) {
+            write_string(pair.first);
             m_serialized += ":";
-            write_value(*it);
+            write_value(pair.second);
             m_serialized += ",";
         };
 
@@ -77,8 +77,8 @@ void Serializer::write_object(const Value& value) {
 
 void Serializer::write_value(const Value& value) {
     switch (value.type()) {
-    case Value::Type::OBJECT:
-        write_object(value);
+    case Value::Type::MEMBERS:
+        write_members(value);
         break;
     case Value::Type::ARRAY:
         write_array(value);

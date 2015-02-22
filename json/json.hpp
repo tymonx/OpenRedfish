@@ -55,7 +55,7 @@ class Value {
 public:
     using String = std::string;
     using Pair = std::pair<String, Value>;
-    using Object = std::vector<Pair>;
+    using Members = std::vector<Pair>;
     using Array = std::vector<Value>;
     using Bool = bool;
     using Null = std::nullptr_t;
@@ -99,7 +99,7 @@ public:
     };
 
     enum class Type {
-        OBJECT,
+        MEMBERS,
         ARRAY,
         STRING,
         NUMBER,
@@ -139,13 +139,21 @@ public:
 
     Value& operator=(Value&& value);
 
-    Value& append(const Value& value);
+    void push_back(const Pair& pair);
+
+    void push_back(const Value& value);
+
+    void pop_back();
 
     size_t size() const;
 
     void clear();
 
-    bool empty() const;
+    bool empty() const { return !size(); }
+
+    size_t erase(const String& key);
+
+    void swap(Value& value);
 
     Value& operator[](const String& key);
 
@@ -171,15 +179,25 @@ public:
 
     explicit operator Double() const;
 
+    explicit operator const Array&() const;
+
+    explicit operator const Members&() const;
+
     explicit operator const Number&() const;
 
-    bool operator==(const Value& value) const;
+    friend bool operator==(const Value& val1, const Value& val2);
 
-    bool operator!=(const Value& value) const {
-        return !operator==(value);
+    friend bool operator!=(const Value& val1, const Value& val2) {
+        return !operator==(val1, val2);
     }
 
     class BaseIterator {
+    public:
+        friend bool operator!=(const BaseIterator& it1,
+                const BaseIterator& it2) { return !it1.is_equal(it2); }
+
+        friend bool operator==(const BaseIterator& it1,
+                const BaseIterator& it2) { return it1.is_equal(it2); }
     protected:
          BaseIterator(const Array::iterator& it) :
             m_type(Value::Type::ARRAY),
@@ -189,56 +207,56 @@ public:
             m_type(Value::Type::ARRAY),
             m_array_const_iterator(it) { }
 
-        BaseIterator(const Object::iterator& it) :
-            m_type(Value::Type::OBJECT),
-            m_object_iterator(it) { }
+        BaseIterator(const Members::iterator& it) :
+            m_type(Value::Type::MEMBERS),
+            m_members_iterator(it) { }
 
-        BaseIterator(const Object::const_iterator& it) :
-            m_type(Value::Type::OBJECT),
-            m_object_const_iterator(it) { }
+        BaseIterator(const Members::const_iterator& it) :
+            m_type(Value::Type::MEMBERS),
+            m_members_const_iterator(it) { }
 
         void increment() {
-            if (Value::Type::OBJECT == m_type) {
-                m_object_iterator++;
+            if (Value::Type::MEMBERS == m_type) {
+                m_members_iterator++;
             } else {
                 m_array_iterator++;
             }
         }
 
         void decrement() {
-            if (Value::Type::OBJECT == m_type) {
-                m_object_iterator--;
+            if (Value::Type::MEMBERS == m_type) {
+                m_members_iterator--;
             } else {
                 m_array_iterator--;
             }
         }
 
         void const_increment() {
-            if (Value::Type::OBJECT == m_type) {
-                m_object_const_iterator++;
+            if (Value::Type::MEMBERS == m_type) {
+                m_members_const_iterator++;
             } else {
                 m_array_const_iterator++;
             }
         }
 
         void const_decrement() {
-            if (Value::Type::OBJECT == m_type) {
-                m_object_const_iterator--;
+            if (Value::Type::MEMBERS == m_type) {
+                m_members_const_iterator--;
             } else {
                 m_array_const_iterator--;
             }
         }
 
         Value& deref() {
-            if (Value::Type::OBJECT == m_type) {
-                return m_object_iterator->second;
+            if (Value::Type::MEMBERS == m_type) {
+                return m_members_iterator->second;
             }
             return *m_array_iterator;
         }
 
         const Value& const_deref() const {
-            if (Value::Type::OBJECT == m_type) {
-                return m_object_const_iterator->second;
+            if (Value::Type::MEMBERS == m_type) {
+                return m_members_const_iterator->second;
             }
             return *m_array_const_iterator;
         }
@@ -248,8 +266,8 @@ public:
                 return false;
             }
 
-            if (Value::Type::OBJECT == m_type) {
-                return (m_object_iterator == it.m_object_iterator);
+            if (Value::Type::MEMBERS == m_type) {
+                return (m_members_iterator == it.m_members_iterator);
             }
             return (m_array_iterator == it.m_array_iterator);
         }
@@ -259,27 +277,19 @@ public:
                 return false;
             }
 
-            if (Value::Type::OBJECT == m_type) {
-                return (m_object_const_iterator == it.m_object_const_iterator);
+            if (Value::Type::MEMBERS == m_type) {
+                return (m_members_const_iterator == it.m_members_const_iterator);
             }
             return (m_array_const_iterator == it.m_array_const_iterator);
         }
-    public:
-        const char* key() const;
-
-        friend bool operator!=(const BaseIterator& it1,
-                const BaseIterator& it2) { return !it1.is_equal(it2); }
-
-        friend bool operator==(const BaseIterator& it1,
-                const BaseIterator& it2) { return it1.is_equal(it2); }
     private:
         Value::Type m_type;
 
         union {
             Array::iterator m_array_iterator;
             Array::const_iterator m_array_const_iterator;
-            Object::iterator m_object_iterator;
-            Object::const_iterator m_object_const_iterator;
+            Members::iterator m_members_iterator;
+            Members::const_iterator m_members_const_iterator;
         };
     };
 
@@ -291,7 +301,7 @@ public:
 
         Iterator(const Array::iterator& it) : BaseIterator(it) { }
 
-        Iterator(const Object::iterator& it) : BaseIterator(it) { }
+        Iterator(const Members::iterator& it) : BaseIterator(it) { }
 
         Iterator& operator++() { increment(); return *this; }
 
@@ -314,7 +324,7 @@ public:
 
         ConstIterator(const Array::const_iterator& it) : BaseIterator(it) { }
 
-        ConstIterator(const Object::const_iterator& it) : BaseIterator(it) { }
+        ConstIterator(const Members::const_iterator& it) : BaseIterator(it) { }
 
         const ConstIterator& operator++() { const_increment(); return *this; }
 
@@ -345,7 +355,7 @@ private:
     enum Type m_type;
 
     union {
-        Object m_object;
+        Members m_members;
         Array m_array;
         String m_string;
         Number m_number;

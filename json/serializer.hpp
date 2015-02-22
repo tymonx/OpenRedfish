@@ -66,7 +66,7 @@ public:
 private:
     std::string m_serialized;
 
-    void write_object(const Value& value);
+    void write_members(const Value& value);
     void write_value(const Value& value);
     void write_array(const Value& value);
     void write_number(const Value& value);
