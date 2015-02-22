@@ -51,53 +51,55 @@
 
 namespace json {
 
-class Value {
+class Value;
+
+using String = std::string;
+using Pair = std::pair<String, Value>;
+using Members = std::vector<Pair>;
+using Array = std::vector<Value>;
+using Bool = bool;
+using Null = std::nullptr_t;
+using Uint = unsigned int;
+using Int = int;
+using Double = double;
+
+class Number {
 public:
-    using String = std::string;
-    using Pair = std::pair<String, Value>;
-    using Members = std::vector<Pair>;
-    using Array = std::vector<Value>;
-    using Bool = bool;
-    using Null = std::nullptr_t;
-    using Uint = unsigned int;
-    using Int = int;
-    using Double = double;
-
-    class Number {
-    public:
-        enum class Type {
-            INT,
-            UINT,
-            DOUBLE
-        };
-
-        Number() : m_type(Type::INT), m_int(0) { }
-
-        Number(Int value) : m_type(Type::INT), m_int(value) { }
-
-        Number(Uint value) : m_type(Type::UINT), m_uint(value) { }
-
-        Number(Double value) : m_type(Type::DOUBLE), m_Double(value) { }
-
-        explicit operator Int() const;
-
-        explicit operator Uint() const;
-
-        explicit operator Double() const;
-
-        bool operator==(const Number& number) const;
-
-        Type type() const { return m_type; }
-    private:
-        enum Type m_type;
-
-        union {
-            Int m_int;
-            Uint m_uint;
-            Double m_Double;
-        };
+    enum class Type {
+        INT,
+        UINT,
+        DOUBLE
     };
 
+    Number();
+
+    Number(Int value);
+
+    Number(Uint value);
+
+    Number(Double value);
+
+    explicit operator Int() const;
+
+    explicit operator Uint() const;
+
+    explicit operator Double() const;
+
+    bool operator==(const Number& number) const;
+
+    Type type() const { return m_type; }
+private:
+    enum Type m_type;
+
+    union {
+        Int m_int;
+        Uint m_uint;
+        Double m_Double;
+    };
+};
+
+class Value {
+public:
     enum class Type {
         MEMBERS,
         ARRAY,
@@ -151,13 +153,9 @@ public:
 
     void assign(size_t count, const Value& value);
 
-    void assign(std::initializer_list<Pair> init_list) {
-        operator=(init_list);
-    }
+    void assign(std::initializer_list<Pair> init_list);
 
-    void assign(std::initializer_list<Value> init_list) {
-        operator=(init_list);
-    }
+    void assign(std::initializer_list<Value> init_list);
 
     void push_back(const Pair& pair);
 
@@ -169,7 +167,7 @@ public:
 
     void clear();
 
-    bool empty() const { return !size(); }
+    bool empty() const;
 
     size_t erase(const String& key);
 
@@ -213,101 +211,35 @@ public:
 
     friend bool operator==(const Value& val1, const Value& val2);
 
-    friend bool operator!=(const Value& val1, const Value& val2) {
-        return !operator==(val1, val2);
-    }
+    friend bool operator!=(const Value& val1, const Value& val2);
 
     class BaseIterator {
     public:
-        friend bool operator!=(const BaseIterator& it1,
-                const BaseIterator& it2) { return !it1.is_equal(it2); }
-
         friend bool operator==(const BaseIterator& it1,
-                const BaseIterator& it2) { return it1.is_equal(it2); }
+                const BaseIterator& it2);
+
+        friend bool operator!=(const BaseIterator& it1,
+                const BaseIterator& it2);
     protected:
-         BaseIterator(const Array::iterator& it) :
-            m_type(Value::Type::ARRAY),
-            m_array_iterator(it) { }
+        BaseIterator(const Array::iterator& it);
 
-        BaseIterator(const Array::const_iterator& it) :
-            m_type(Value::Type::ARRAY),
-            m_array_const_iterator(it) { }
+        BaseIterator(const Array::const_iterator& it);
 
-        BaseIterator(const Members::iterator& it) :
-            m_type(Value::Type::MEMBERS),
-            m_members_iterator(it) { }
+        BaseIterator(const Members::iterator& it);
 
-        BaseIterator(const Members::const_iterator& it) :
-            m_type(Value::Type::MEMBERS),
-            m_members_const_iterator(it) { }
+        BaseIterator(const Members::const_iterator& it);
 
-        void increment() {
-            if (Value::Type::MEMBERS == m_type) {
-                m_members_iterator++;
-            } else {
-                m_array_iterator++;
-            }
-        }
+        void increment();
 
-        void decrement() {
-            if (Value::Type::MEMBERS == m_type) {
-                m_members_iterator--;
-            } else {
-                m_array_iterator--;
-            }
-        }
+        void decrement();
 
-        void const_increment() {
-            if (Value::Type::MEMBERS == m_type) {
-                m_members_const_iterator++;
-            } else {
-                m_array_const_iterator++;
-            }
-        }
+        void const_increment();
 
-        void const_decrement() {
-            if (Value::Type::MEMBERS == m_type) {
-                m_members_const_iterator--;
-            } else {
-                m_array_const_iterator--;
-            }
-        }
+        void const_decrement();
 
-        Value& deref() {
-            if (Value::Type::MEMBERS == m_type) {
-                return m_members_iterator->second;
-            }
-            return *m_array_iterator;
-        }
+        Value& deref();
 
-        const Value& const_deref() const {
-            if (Value::Type::MEMBERS == m_type) {
-                return m_members_const_iterator->second;
-            }
-            return *m_array_const_iterator;
-        }
-
-        bool is_equal(const BaseIterator& it) const {
-            if (it.m_type != m_type) {
-                return false;
-            }
-
-            if (Value::Type::MEMBERS == m_type) {
-                return (m_members_iterator == it.m_members_iterator);
-            }
-            return (m_array_iterator == it.m_array_iterator);
-        }
-
-        bool is_const_equal(const BaseIterator& it) const {
-            if (it.m_type != m_type) {
-                return false;
-            }
-
-            if (Value::Type::MEMBERS == m_type) {
-                return (m_members_const_iterator == it.m_members_const_iterator);
-            }
-            return (m_array_const_iterator == it.m_array_const_iterator);
-        }
+        const Value& const_deref() const;
     private:
         Value::Type m_type;
 
@@ -323,19 +255,15 @@ public:
         public BaseIterator,
         public std::iterator<std::forward_iterator_tag, Value> {
     public:
-        Iterator() : BaseIterator(Array::iterator{}) { }
+        Iterator();
 
-        Iterator(const Array::iterator& it) : BaseIterator(it) { }
+        Iterator(const Array::iterator& it);
 
-        Iterator(const Members::iterator& it) : BaseIterator(it) { }
+        Iterator(const Members::iterator& it);
 
-        Iterator& operator++() { increment(); return *this; }
+        Iterator& operator++();
 
-        Iterator operator++(int) {
-            Iterator temp(*this);
-            increment();
-            return temp;
-        }
+        Iterator operator++(int);
 
         reference operator*() { return deref(); }
 
@@ -346,19 +274,15 @@ public:
         public BaseIterator,
         public std::iterator<std::forward_iterator_tag, const Value> {
     public:
-        ConstIterator() : BaseIterator(Array::const_iterator{}) { }
+        ConstIterator();
 
-        ConstIterator(const Array::const_iterator& it) : BaseIterator(it) { }
+        ConstIterator(const Array::const_iterator& it);
 
-        ConstIterator(const Members::const_iterator& it) : BaseIterator(it) { }
+        ConstIterator(const Members::const_iterator& it);
 
-        const ConstIterator& operator++() { const_increment(); return *this; }
+        const ConstIterator& operator++();
 
-        const ConstIterator operator++(int) {
-            ConstIterator temp(*this);
-            const_increment();
-            return temp;
-        }
+        const ConstIterator operator++(int);
 
         reference operator*() const { return const_deref(); }
 
@@ -369,9 +293,9 @@ public:
 
     Iterator end();
 
-    ConstIterator begin() const { return std::move(cbegin()); }
+    ConstIterator begin() const;
 
-    ConstIterator end() const { return std::move(cend()); }
+    ConstIterator end() const;
 
     ConstIterator cbegin() const;
 

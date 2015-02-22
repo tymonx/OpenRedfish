@@ -62,7 +62,7 @@ void Serializer::write_members(const Value& value) {
     m_serialized += '{';
 
     if (value.size() > 0) {
-        for (const auto& pair : Value::Members(value)) {
+        for (const auto& pair : Members(value)) {
             write_string(pair.first);
             m_serialized += ":";
             write_value(pair.second);
@@ -116,19 +116,19 @@ void Serializer::write_array(const Value& value) {
 }
 
 void Serializer::write_string(const Value& value) {
-    m_serialized += "\"" + Value::String(value) + "\"";
+    m_serialized += "\"" + String(value) + "\"";
 }
 
 void Serializer::write_number(const Value& value) {
-    switch (Value::Number(value).type()) {
-    case Value::Number::Type::INT:
-        m_serialized += std::to_string(Value::Int(value));
+    switch (Number(value).type()) {
+    case Number::Type::INT:
+        m_serialized += std::to_string(Int(value));
         break;
-    case Value::Number::Type::UINT:
-        m_serialized += std::to_string(Value::Uint(value));
+    case Number::Type::UINT:
+        m_serialized += std::to_string(Uint(value));
         break;
-    case Value::Number::Type::DOUBLE:
-        m_serialized += std::to_string(Value::Double(value));
+    case Number::Type::DOUBLE:
+        m_serialized += std::to_string(Double(value));
         break;
     default:
         break;
@@ -136,7 +136,7 @@ void Serializer::write_number(const Value& value) {
 }
 
 void Serializer::write_boolean(const Value& value) {
-    m_serialized += (true == Value::Bool(value)) ? "true" : "false";
+    m_serialized += (true == Bool(value)) ? "true" : "false";
 }
 
 void Serializer::write_empty(const Value&) {

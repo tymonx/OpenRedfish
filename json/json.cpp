@@ -49,7 +49,15 @@
 
 using namespace json;
 
-Value::Number::operator Uint() const {
+Number::Number() : m_type(Type::INT), m_int(0) { }
+
+Number::Number(Int value) : m_type(Type::INT), m_int(value) { }
+
+Number::Number(Uint value) : m_type(Type::UINT), m_uint(value) { }
+
+Number::Number(Double value) : m_type(Type::DOUBLE), m_Double(value) { }
+
+Number::operator Uint() const {
     Uint value;
 
     switch (m_type) {
@@ -76,7 +84,7 @@ Value::Number::operator Uint() const {
     return value;
 }
 
-Value::Number::operator Int() const {
+Number::operator Int() const {
     Int value;
 
     switch (m_type) {
@@ -100,7 +108,7 @@ Value::Number::operator Int() const {
     return value;
 }
 
-Value::Number::operator Double() const {
+Number::operator Double() const {
     Double value;
 
     switch (m_type) {
@@ -121,7 +129,7 @@ Value::Number::operator Double() const {
     return value;
 }
 
-bool Value::Number::operator==(const Number& number) const {
+bool Number::operator==(const Number& number) const {
     bool result = false;
 
     switch (m_type) {
@@ -385,6 +393,14 @@ void Value::assign(size_t count, const Value& value) {
     new (&m_array) Array(count, value);
 }
 
+void Value::assign(std::initializer_list<Pair> init_list) {
+    operator=(init_list);
+}
+
+void Value::assign(std::initializer_list<Value> init_list) {
+    operator=(init_list);
+}
+
 size_t Value::size() const {
     size_t size = 0;
 
@@ -411,6 +427,10 @@ size_t Value::size() const {
     }
 
     return size;
+}
+
+bool Value::empty() const {
+    return !size();
 }
 
 void Value::clear() {
@@ -562,6 +582,10 @@ bool json::operator==(const Value& val1, const Value& val2) {
     return result;
 }
 
+bool json::operator!=(const Value& val1, const Value& val2) {
+    return !operator==(val1, val2);
+}
+
 Value::operator String&() {
     assert_type(Type::STRING);
     return m_string;
@@ -645,6 +669,14 @@ Value::Iterator Value::end() {
     return Iterator();
 }
 
+Value::ConstIterator Value::begin() const {
+    return std::move(cbegin());
+}
+
+Value::ConstIterator Value::end() const {
+    return std::move(cend());
+}
+
 Value::ConstIterator Value::cbegin() const {
     if (Type::MEMBERS == m_type) {
         return m_members.cbegin();
@@ -661,4 +693,117 @@ Value::ConstIterator Value::cend() const {
         return m_array.cend();
     }
     return ConstIterator();
+}
+
+Value::BaseIterator::BaseIterator(const Array::iterator& it) :
+    m_type(Value::Type::ARRAY),
+    m_array_iterator(it) { }
+
+Value::BaseIterator::BaseIterator(const Array::const_iterator& it) :
+    m_type(Value::Type::ARRAY),
+    m_array_const_iterator(it) { }
+
+Value::BaseIterator::BaseIterator(const Members::iterator& it) :
+    m_type(Value::Type::MEMBERS),
+    m_members_iterator(it) { }
+
+Value::BaseIterator::BaseIterator(const Members::const_iterator& it) :
+    m_type(Value::Type::MEMBERS),
+    m_members_const_iterator(it) { }
+
+bool json::operator!=(const Value::BaseIterator& it1,
+        const Value::BaseIterator& it2) { return !operator==(it1, it2); }
+
+bool json::operator==(const Value::BaseIterator& it1,
+        const Value::BaseIterator& it2) {
+    if (it1.m_type != it2.m_type) {
+        return false;
+    }
+
+    if (Value::Type::MEMBERS == it1.m_type) {
+        return (it1.m_members_iterator == it2.m_members_iterator);
+    }
+    return (it1.m_array_iterator == it2.m_array_iterator);
+}
+
+void Value::BaseIterator::increment() {
+    if (Value::Type::MEMBERS == m_type) {
+        m_members_iterator++;
+    } else {
+        m_array_iterator++;
+    }
+}
+
+void Value::BaseIterator::decrement() {
+    if (Value::Type::MEMBERS == m_type) {
+        m_members_iterator--;
+    } else {
+        m_array_iterator--;
+    }
+}
+
+void Value::BaseIterator::const_increment() {
+    if (Value::Type::MEMBERS == m_type) {
+        m_members_const_iterator++;
+    } else {
+        m_array_const_iterator++;
+    }
+}
+
+void Value::BaseIterator::const_decrement() {
+    if (Value::Type::MEMBERS == m_type) {
+        m_members_const_iterator--;
+    } else {
+        m_array_const_iterator--;
+    }
+}
+
+Value& Value::BaseIterator::deref() {
+    if (Value::Type::MEMBERS == m_type) {
+        return m_members_iterator->second;
+    }
+    return *m_array_iterator;
+}
+
+const Value& Value::BaseIterator::const_deref() const {
+    if (Value::Type::MEMBERS == m_type) {
+        return m_members_const_iterator->second;
+    }
+    return *m_array_const_iterator;
+}
+
+Value::Iterator::Iterator() : BaseIterator(Array::iterator{}) { }
+
+Value::Iterator::Iterator(const Array::iterator& it) : BaseIterator(it) { }
+
+Value::Iterator::Iterator(const Members::iterator& it) : BaseIterator(it) { }
+
+Value::Iterator& Value::Iterator::operator++() {
+    increment();
+    return *this;
+}
+
+Value::Iterator Value::Iterator::operator++(int) {
+    Iterator temp(*this);
+    increment();
+    return temp;
+}
+
+Value::ConstIterator::ConstIterator() : BaseIterator(Array::iterator{}) { }
+
+Value::ConstIterator::ConstIterator(const Array::const_iterator& it) :
+    BaseIterator(it) { }
+
+Value::ConstIterator::ConstIterator(const Members::const_iterator& it) :
+    BaseIterator(it) { }
+
+const Value::ConstIterator& Value::ConstIterator::operator++() {
+    const_increment();
+    return *this;
+}
+
+const Value::ConstIterator Value::ConstIterator::operator++(int) {
+    ConstIterator temp(*this);
+    const_increment();
+    return temp;
 }

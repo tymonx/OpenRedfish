@@ -61,8 +61,8 @@ int main(void) {
 
     val = -1;
 
-    cout << json::Value::Int(val.type()) << endl;
-    cout << json::Value::Int(val) << endl;
+    cout << json::Int(val.type()) << endl;
+    cout << json::Int(val) << endl;
     cout << (val == 2) << endl;
 
     val = nullptr;
@@ -83,8 +83,8 @@ int main(void) {
     val["key1"] = 4;
     val["key2"];
     val["key3"] = -2;
-    val["key4"].push_back(json::Value::Pair("subtest1", 5));
-    val["key4"].push_back(json::Value::Pair("subtest2", true));
+    val["key4"].push_back(json::Pair("subtest1", 5));
+    val["key4"].push_back(json::Pair("subtest2", true));
     val["key5"]["inkey4"] = "Test1";
     val["key5"]["inkey5"] = "Test2";
 
@@ -92,15 +92,15 @@ int main(void) {
     val2["key1"] = 5;
     val2["key2"] = {1, 3, 5};
     val2["key3"] = -7;
-    val2["key4"].push_back(json::Value::Pair("subtest1", 5));
-    val2["key4"].push_back(json::Value::Pair("subtest2", true));
+    val2["key4"].push_back(json::Pair("subtest1", 5));
+    val2["key4"].push_back(json::Pair("subtest2", true));
     val2["key5"]["inkey4"] = "Test1";
     val2["key5"]["inkey5"] = "Test2";
     val2["key6"][0] = 3;
     val2["key6"][1] = 2;
     val2["key6"][2] = 1;
     val2["key6"][3] = 0;
-    using Pair = json::Value::Pair;
+    using Pair = json::Pair;
     (val2["key7"] = {Pair("a", 2), Pair("b", 3), Pair("b", 4)})[0];
     val2["key8"] = json::Value(5, nullptr);
     val2["key8"].assign(5, true);
