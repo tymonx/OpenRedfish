@@ -43,8 +43,6 @@
 
 #include "serializer.hpp"
 
-#include <stdexcept>
-
 using namespace json;
 
 Serializer::Serializer() : m_serialized() { }
@@ -54,12 +52,10 @@ Serializer::Serializer(const Value& value) : m_serialized() {
 }
 
 Serializer& Serializer::operator<<(const Value& value) {
-    if ((Value::Type::MEMBERS != value.type()) &&
-        (Value::Type::EMPTY != value.type())) {
-        throw std::domain_error("Invalid JSON type");
+    if ((Value::Type::MEMBERS == value.type()) ||
+        (Value::Type::EMPTY == value.type())) {
+        write_members(value);
     }
-
-    write_members(value);
 
     return *this;
 }

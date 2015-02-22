@@ -94,7 +94,7 @@ private:
     union {
         Int m_int;
         Uint m_uint;
-        Double m_Double;
+        Double m_double;
     };
 };
 
@@ -183,31 +183,31 @@ public:
 
     Type type() const { return m_type; }
 
-    explicit operator String&();
+    explicit operator String&() { return m_string; }
 
-    explicit operator const String&() const;
+    explicit operator const String&() const { return m_string; }
 
-    explicit operator const char*() const;
+    explicit operator const char*() const { return m_string.c_str(); }
 
-    explicit operator Bool() const;
+    explicit operator Bool() const { return m_boolean; }
 
-    explicit operator Null() const;
+    explicit operator Null() const { return nullptr; }
 
-    explicit operator Int() const;
+    explicit operator Int() const { return Int(m_number); }
 
-    explicit operator Uint() const;
+    explicit operator Uint() const { return Uint(m_number); }
 
-    explicit operator Double() const;
+    explicit operator Double() const { return Double(m_number); }
 
-    explicit operator Array&();
+    explicit operator Array&() { return m_array; }
 
-    explicit operator Number&();
+    explicit operator Number&() { return m_number; }
 
-    explicit operator const Array&() const;
+    explicit operator const Array&() const { return m_array; }
 
-    explicit operator const Members&() const;
+    explicit operator const Members&() const { return m_members; }
 
-    explicit operator const Number&() const;
+    explicit operator const Number&() const { return m_number; }
 
     friend bool operator==(const Value& val1, const Value& val2);
 
@@ -313,10 +313,6 @@ private:
     };
 
     void create_container(Type type);
-    void assert_container(Type new_type);
-    void assert_container() const;
-    void assert_type(Type type);
-    void assert_type(Type type) const;
 };
 
 } /* namespace json */

@@ -45,7 +45,6 @@
 
 #include <cmath>
 #include <limits>
-#include <stdexcept>
 
 using namespace json;
 
@@ -55,26 +54,20 @@ Number::Number(Int value) : m_type(Type::INT), m_int(value) { }
 
 Number::Number(Uint value) : m_type(Type::UINT), m_uint(value) { }
 
-Number::Number(Double value) : m_type(Type::DOUBLE), m_Double(value) { }
+Number::Number(Double value) : m_type(Type::DOUBLE), m_double(value) { }
 
 Number::operator Uint() const {
     Uint value;
 
     switch (m_type) {
     case Type::INT:
-        if (std::signbit(m_int)) {
-            throw std::underflow_error("Number underflow");
-        }
-        value = Uint(m_int);
+        value = std::signbit(m_int) ? 0 : Uint(m_int);
         break;
     case Type::UINT:
         value = m_uint;
         break;
     case Type::DOUBLE:
-        if (std::signbit(m_Double)) {
-            throw std::underflow_error("Number underflow");
-        }
-        value = Uint(std::round(m_Double));
+        value = std::signbit(m_double) ? 0 : Uint(std::round(m_double));
         break;
     default:
         value = 0;
@@ -92,13 +85,11 @@ Number::operator Int() const {
         value = m_int;
         break;
     case Type::UINT:
-        if (std::numeric_limits<Int>::max() < m_uint) {
-            throw std::overflow_error("Number overflow");
-        }
-        value = Int(m_uint);
+        value = (std::numeric_limits<Int>::max() < m_uint) ?
+            std::numeric_limits<Int>::max() : Int(m_uint);
         break;
     case Type::DOUBLE:
-        value = Int(std::round(m_Double));
+        value = Int(std::round(m_double));
         break;
     default:
         value = 0;
@@ -119,7 +110,7 @@ Number::operator Double() const {
         value = m_uint;
         break;
     case Type::DOUBLE:
-        value = m_Double;
+        value = m_double;
         break;
     default:
         value = 0.0;
@@ -140,7 +131,7 @@ bool Number::operator==(const Number& number) const {
         result = (m_uint == Uint(number));
         break;
     case Type::DOUBLE:
-        result = std::fabs(m_Double - Double(number)) <
+        result = std::fabs(m_double - Double(number)) <
             std::numeric_limits<Double>::epsilon();
         break;
     default:
@@ -229,38 +220,6 @@ Value::~Value() {
     default:
         break;
     }
-}
-
-void Value::assert_container(Type new_type) {
-    if ((Type::MEMBERS == m_type) || (Type::ARRAY == m_type)) return;
-
-    if (Type::EMPTY == m_type) {
-        *this = std::move(Value(new_type));
-    } else {
-        throw std::domain_error("Invalid JSON type ");
-    }
-}
-
-void Value::assert_container() const {
-    if ((Type::MEMBERS == m_type) || (Type::ARRAY == m_type)) return;
-
-    throw std::domain_error("Invalid JSON type");
-}
-
-void Value::assert_type(Type type) {
-    if (m_type == type) return;
-
-    if (Type::EMPTY == m_type) {
-        *this = std::move(Value(type));
-    } else {
-        throw std::domain_error("Invalid JSON type ");
-    }
-}
-
-void Value::assert_type(Type type) const {
-    if (m_type == type) return;
-
-    throw std::domain_error("Invalid JSON type ");
 }
 
 void Value::create_container(Type type) {
@@ -457,7 +416,7 @@ void Value::clear() {
 }
 
 size_t Value::erase(const String& key) {
-    assert_type(Type::MEMBERS);
+    if (Type::MEMBERS != m_type) { return 0; }
 
     for (auto it = m_members.begin(); it != m_members.end(); it++) {
         if (key == it->first) {
@@ -470,7 +429,10 @@ size_t Value::erase(const String& key) {
 }
 
 Value& Value::Value::operator[](const String& key) {
-    assert_type(Type::MEMBERS);
+    if (Type::MEMBERS != m_type) {
+        if (Type::EMPTY == m_type) { *this = std::move(Value(Type::MEMBERS)); }
+        else { return *this; }
+    }
 
     for (auto& pair : m_members) {
         if (key == pair.first) {
@@ -484,7 +446,7 @@ Value& Value::Value::operator[](const String& key) {
 }
 
 const Value& Value::Value::operator[](const String& key) const {
-    assert_type(Type::MEMBERS);
+    if (Type::MEMBERS != m_type) { return *this; }
 
     for (const auto& pair : m_members) {
         if (key == pair.first) {
@@ -492,11 +454,11 @@ const Value& Value::Value::operator[](const String& key) const {
         }
     }
 
-    throw std::out_of_range("Not found");
+    return *this;
 }
 
 Value& Value::Value::operator[](size_t index) {
-    assert_container(Type::ARRAY);
+    if (Type::EMPTY == m_type) { *this = std::move(Value(Type::ARRAY)); }
 
     if (Type::ARRAY == m_type) {
         if (size() == index) {
@@ -504,42 +466,60 @@ Value& Value::Value::operator[](size_t index) {
         }
         return m_array[index];
     }
-    return m_members[index].second;
+
+    if  (Type::MEMBERS == m_type) {
+        return m_members[index].second;
+    }
+
+    return *this;
 }
 
 const Value& Value::Value::operator[](size_t index) const {
-    assert_container();
-
     if (Type::ARRAY == m_type) {
         return m_array[index];
     }
-    return m_members[index].second;
+
+    if (Type::MEMBERS == m_type) {
+        return m_members[index].second;
+    }
+
+    return *this;
 }
 
 void Value::push_back(const Value& value) {
-    assert_type(Type::ARRAY);
+    if (Type::EMPTY == m_type) { *this = std::move(Value(Type::ARRAY)); }
 
-    m_array.push_back(value);
+    if (Type::ARRAY == m_type) {
+        m_array.push_back(value);
+    }
 }
 
 void Value::push_back(const Pair& pair) {
-    assert_container(Type::MEMBERS);
+    if (Type::EMPTY == m_type) { *this = std::move(Value(Type::MEMBERS)); }
 
     if (Type::MEMBERS == m_type) {
         operator[](pair.first) = pair.second;
-    } else {
+        return;
+    }
+
+    if (Type::ARRAY == m_type) {
         m_array.push_back(pair);
+        return;
     }
 }
 
 void Value::pop_back() {
+    if (Type::ARRAY == m_type) {
+        m_array.pop_back();
+        return;
+    }
+
     if (Type::MEMBERS == m_type) {
         m_members.pop_back();
-    } else if (Type::ARRAY == m_type) {
-        m_array.pop_back();
-    } else {
-        *this = std::move(Value());
+        return;
     }
+
+    *this = std::move(Value());
 }
 
 void Value::swap(Value& value) {
@@ -586,86 +566,27 @@ bool json::operator!=(const Value& val1, const Value& val2) {
     return !operator==(val1, val2);
 }
 
-Value::operator String&() {
-    assert_type(Type::STRING);
-    return m_string;
-}
-
-Value::operator const String&() const {
-    assert_type(Type::STRING);
-    return m_string;
-}
-
-Value::operator const char*() const {
-    assert_type(Type::STRING);
-    return m_string.c_str();
-}
-
-Value::operator Bool() const {
-    assert_type(Type::BOOLEAN);
-    return m_boolean;
-}
-
-Value::operator Null() const {
-    assert_type(Type::EMPTY);
-    return nullptr;
-}
-
-Value::operator Int() const {
-    assert_type(Type::NUMBER);
-    return Int(m_number);
-}
-
-Value::operator Uint() const {
-    assert_type(Type::NUMBER);
-    return Uint(m_number);
-}
-
-Value::operator Double() const {
-    assert_type(Type::NUMBER);
-    return Double(m_number);
-}
-
-Value::operator Array&() {
-    assert_type(Type::ARRAY);
-    return m_array;
-}
-
-Value::operator Number&() {
-    assert_type(Type::NUMBER);
-    return m_number;
-}
-
-Value::operator const Array&() const {
-    assert_type(Type::ARRAY);
-    return m_array;
-}
-
-Value::operator const Members&() const {
-    assert_type(Type::MEMBERS);
-    return m_members;
-}
-
-Value::operator const Number&() const {
-    assert_type(Type::NUMBER);
-    return m_number;
-}
-
 Value::Iterator Value::begin() {
     if (Type::MEMBERS == m_type) {
         return m_members.begin();
-    } else if (Type::ARRAY == m_type) {
+    }
+
+    if (Type::ARRAY == m_type) {
         return m_array.begin();
     }
+
     return Iterator();
 }
 
 Value::Iterator Value::end() {
     if (Type::MEMBERS == m_type) {
         return m_members.end();
-    } else if (Type::ARRAY == m_type) {
+    }
+
+    if (Type::ARRAY == m_type) {
         return m_array.end();
     }
+
     return Iterator();
 }
 
@@ -680,18 +601,24 @@ Value::ConstIterator Value::end() const {
 Value::ConstIterator Value::cbegin() const {
     if (Type::MEMBERS == m_type) {
         return m_members.cbegin();
-    } else if (Type::ARRAY == m_type) {
+    }
+
+    if (Type::ARRAY == m_type) {
         return m_array.cbegin();
     }
+
     return ConstIterator();
 }
 
 Value::ConstIterator Value::cend() const {
     if (Type::MEMBERS == m_type) {
         return m_members.cend();
-    } else if (Type::ARRAY == m_type) {
+    }
+
+    if (Type::ARRAY == m_type) {
         return m_array.cend();
     }
+
     return ConstIterator();
 }
 
@@ -711,9 +638,6 @@ Value::BaseIterator::BaseIterator(const Members::const_iterator& it) :
     m_type(Value::Type::MEMBERS),
     m_members_const_iterator(it) { }
 
-bool json::operator!=(const Value::BaseIterator& it1,
-        const Value::BaseIterator& it2) { return !operator==(it1, it2); }
-
 bool json::operator==(const Value::BaseIterator& it1,
         const Value::BaseIterator& it2) {
     if (it1.m_type != it2.m_type) {
@@ -723,8 +647,16 @@ bool json::operator==(const Value::BaseIterator& it1,
     if (Value::Type::MEMBERS == it1.m_type) {
         return (it1.m_members_iterator == it2.m_members_iterator);
     }
-    return (it1.m_array_iterator == it2.m_array_iterator);
+
+    if (Value::Type::ARRAY == it1.m_type) {
+        return (it1.m_array_iterator == it2.m_array_iterator);
+    }
+
+    return false;
 }
+
+bool json::operator!=(const Value::BaseIterator& it1,
+        const Value::BaseIterator& it2) { return !operator==(it1, it2); }
 
 void Value::BaseIterator::increment() {
     if (Value::Type::MEMBERS == m_type) {
