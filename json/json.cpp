@@ -63,10 +63,10 @@ Value::Number::operator Uint() const {
         value = m_uint;
         break;
     case Type::DOUBLE:
-        if (std::signbit(m_double)) {
+        if (std::signbit(m_Double)) {
             throw std::underflow_error("Number underflow");
         }
-        value = Uint(std::round(m_double));
+        value = Uint(std::round(m_Double));
         break;
     default:
         value = 0;
@@ -90,7 +90,7 @@ Value::Number::operator Int() const {
         value = Int(m_uint);
         break;
     case Type::DOUBLE:
-        value = Int(std::round(m_double));
+        value = Int(std::round(m_Double));
         break;
     default:
         value = 0;
@@ -100,8 +100,8 @@ Value::Number::operator Int() const {
     return value;
 }
 
-Value::Number::operator double() const {
-    double value;
+Value::Number::operator Double() const {
+    Double value;
 
     switch (m_type) {
     case Type::INT:
@@ -111,7 +111,7 @@ Value::Number::operator double() const {
         value = m_uint;
         break;
     case Type::DOUBLE:
-        value = m_double;
+        value = m_Double;
         break;
     default:
         value = 0.0;
@@ -132,8 +132,8 @@ bool Value::Number::operator==(const Number& number) const {
         result = (m_uint == Uint(number));
         break;
     case Type::DOUBLE:
-        result = std::fabs(m_double - double(number)) <
-            std::numeric_limits<double>::epsilon();
+        result = std::fabs(m_Double - Double(number)) <
+            std::numeric_limits<Double>::epsilon();
         break;
     default:
         result = false;
@@ -161,7 +161,7 @@ Value::Value(const std::string& str) : m_type(Type::STRING) {
     new (&m_string) std::string(str);
 }
 
-Value::Value(const KeyValue& key_value) : m_type(Type::OBJECT) {
+Value::Value(const Pair& key_value) : m_type(Type::OBJECT) {
     new (&m_object) Object{key_value};
 }
 
@@ -178,7 +178,7 @@ Value::Value(Int value) : m_type(Type::NUMBER) {
     new (&m_number) Number(value);
 }
 
-Value::Value(double value) : m_type(Type::NUMBER) {
+Value::Value(Double value) : m_type(Type::NUMBER) {
     new (&m_number) Number(value);
 }
 
@@ -466,9 +466,9 @@ Value::operator Uint() const {
     return Uint(m_number);
 }
 
-Value::operator double() const {
+Value::operator Double() const {
     assert_type(Type::NUMBER);
-    return double(m_number);
+    return Double(m_number);
 }
 
 Value::Iterator Value::begin() {

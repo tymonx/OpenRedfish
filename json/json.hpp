@@ -53,11 +53,12 @@ namespace json {
 
 class Value {
 public:
-    using KeyValue = std::pair<std::string, Value>;
-    using Object = std::vector<KeyValue>;
+    using Pair = std::pair<std::string, Value>;
+    using Object = std::vector<Pair>;
     using Array = std::vector<Value>;
-    using Uint = uint64_t;
-    using Int = int64_t;
+    using Uint = unsigned int;
+    using Int = int;
+    using Double = double;
 
     enum class Type {
         OBJECT,
@@ -78,7 +79,7 @@ public:
 
     Value(const std::string& str);
 
-    Value(const KeyValue& key_value);
+    Value(const Pair& key_value);
 
     Value(const std::string& key, const Value& value);
 
@@ -86,7 +87,7 @@ public:
 
     Value(Int value);
 
-    Value(double value);
+    Value(Double value);
 
     Value(const Value& value) { operator=(value); }
 
@@ -124,7 +125,7 @@ public:
 
     explicit operator Uint() const;
 
-    explicit operator double() const;
+    explicit operator Double() const;
 
     bool operator==(const Value& value) const;
 
@@ -233,16 +234,11 @@ public:
     public:
         Iterator() : BaseIterator(Array::iterator{}) { }
 
-        Iterator(const Array::iterator& it) :
-            BaseIterator(it) { }
+        Iterator(const Array::iterator& it) : BaseIterator(it) { }
 
-        Iterator(const Object::iterator& it) :
-            BaseIterator(it) { }
+        Iterator(const Object::iterator& it) : BaseIterator(it) { }
 
-        Iterator& operator++() {
-            increment();
-            return *this;
-        }
+        Iterator& operator++() { increment(); return *this; }
 
         Iterator operator++(int) {
             Iterator temp(*this);
@@ -254,25 +250,18 @@ public:
 
         Value& operator->() { return deref(); }
 
-        bool operator!=(const Iterator& it) const {
-            return !is_equal(it);
-        }
+        bool operator!=(const Iterator& it) const { return !is_equal(it); }
     };
 
     class ConstIterator : public BaseIterator {
     public:
         ConstIterator() : BaseIterator(Array::const_iterator{}) { }
 
-        ConstIterator(const Array::const_iterator& it) :
-            BaseIterator(it) { }
+        ConstIterator(const Array::const_iterator& it) : BaseIterator(it) { }
 
-        ConstIterator(const Object::const_iterator& it) :
-            BaseIterator(it) { }
+        ConstIterator(const Object::const_iterator& it) : BaseIterator(it) { }
 
-        const ConstIterator& operator++() {
-            const_increment();
-            return *this;
-        }
+        const ConstIterator& operator++() { const_increment(); return *this; }
 
         const ConstIterator operator++(int) {
             ConstIterator temp(*this);
@@ -316,13 +305,13 @@ private:
 
         Number(Uint value) : m_type(Type::UINT), m_uint(value) { }
 
-        Number(double value) : m_type(Type::DOUBLE), m_double(value) { }
+        Number(Double value) : m_type(Type::DOUBLE), m_Double(value) { }
 
         operator Int() const;
 
         operator Uint() const;
 
-        operator double() const;
+        operator Double() const;
 
         bool operator==(const Number& number) const;
 
@@ -331,7 +320,7 @@ private:
         union {
             Int m_int;
             Uint m_uint;
-            double m_double;
+            Double m_Double;
         };
     };
 
