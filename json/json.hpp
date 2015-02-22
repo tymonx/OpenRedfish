@@ -266,6 +266,12 @@ public:
         }
     public:
         const char* key() const;
+
+        friend bool operator!=(const BaseIterator& it1,
+                const BaseIterator& it2) { return !it1.is_equal(it2); }
+
+        friend bool operator==(const BaseIterator& it1,
+                const BaseIterator& it2) { return it1.is_equal(it2); }
     private:
         Value::Type m_type;
 
@@ -277,7 +283,9 @@ public:
         };
     };
 
-    class Iterator : public BaseIterator {
+    class Iterator :
+        public BaseIterator,
+        public std::iterator<std::forward_iterator_tag, Value> {
     public:
         Iterator() : BaseIterator(Array::iterator{}) { }
 
@@ -293,14 +301,14 @@ public:
             return temp;
         }
 
-        Value& operator*() { return deref(); }
+        reference operator*() { return deref(); }
 
-        Value& operator->() { return deref(); }
-
-        bool operator!=(const Iterator& it) const { return !is_equal(it); }
+        pointer operator->() { return &deref(); }
     };
 
-    class ConstIterator : public BaseIterator {
+    class ConstIterator :
+        public BaseIterator,
+        public std::iterator<std::forward_iterator_tag, const Value> {
     public:
         ConstIterator() : BaseIterator(Array::const_iterator{}) { }
 
@@ -316,13 +324,9 @@ public:
             return temp;
         }
 
-        const Value& operator*() const { return const_deref(); }
+        reference operator*() const { return const_deref(); }
 
-        const Value& operator->() const { return const_deref(); }
-
-        bool operator!=(const ConstIterator& it) const {
-            return !is_const_equal(it);
-        }
+        pointer operator->() const { return &const_deref(); }
     };
 
     Iterator begin();
