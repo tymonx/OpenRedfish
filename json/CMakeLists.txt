@@ -30,6 +30,7 @@
 set(SOURCES
     test.cpp
     json.cpp
+    serializer.cpp
 )
 
 add_executable(json ${SOURCES})

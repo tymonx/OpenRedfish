@@ -35,66 +35,44 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file serializer.hpp
+ *
+ * @brief JSON serializer interface
  * */
 
+#ifndef _JSON_SERIALIZER_HPP_
+#define _JSON_SERIALIZER_HPP_
+
 #include "json.hpp"
-#include "serializer.hpp"
 
-#include <iostream>
+#include <string>
 
-using namespace std;
+namespace json {
 
-int main(void) {
+class Serializer {
+public:
+    Serializer& operator<<(const Value& value);
 
-    json::Value val("Test");
+    const std::string& str() const { return m_serialized; }
+    const char* c_str() const { return str().c_str(); }
+private:
+    std::string m_serialized;
 
-    cout << std::string(val) << endl;
+    void write_object(const Value& value);
+    void write_value(const Value& value);
+    void write_array(const Value& value);
+    void write_number(const Value& value);
+    void write_string(const Value& value);
+    void write_boolean(const Value& value);
+    void write_empty(const Value& value);
+};
 
-    val = json::Value(true);
-
-    cout << bool(val) << endl;
-
-    val = nullptr;
-
-    cout << (val != nullptr) << endl;
-
-    val = -1;
-
-    cout << json::Value::Int(val.type()) << endl;
-    cout << json::Value::Int(val) << endl;
-    cout << (val == 2) << endl;
-
-    val = nullptr;
-
-    val.append(nullptr)["test"] = 5;
-    val.append(6);
-    val.append("Hello");
-    val.append(val);
-
-    cout << val.size() << endl;
-    cout << int32_t(val[0]["test"].size()) << endl;
-
-    for (const auto& data : val) {
-        cout << "Foreach type: " << int(data.type()) << endl;
-    }
-
-    val = nullptr;
-    val["key1"] = 4;
-    val["key2"];
-    val["key3"] = -2;
-    val["key4"].append(json::Value::Pair("subtest1", 5));
-    val["key4"].append(json::Value::Pair("subtest2", true));
-    val["key5"]["inkey4"] = "Test1";
-    val["key5"]["inkey5"] = "Test2";
-
-    json::Serializer serializer;
-
-    serializer << val;
-    cout << "Serializer: " << serializer << endl;
-
-    for (const auto& data : val) {
-        cout << "Foreach type: " << int(data.type()) << endl;
-    }
-
-    return 0;
+inline std::ostream& operator<<(std::ostream& os,
+        const Serializer& serializer) {
+    return os << serializer.str();
 }
+
+}
+
+#endif /* _JSON_SERIALIZER_HPP_ */

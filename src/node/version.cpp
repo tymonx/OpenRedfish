@@ -35,10 +35,6 @@
 #include <ctime>
 #include <locale>
 
-#include <iostream>
-
-using std::cout;
-using std::endl;
 using std::time;
 using std::time_t;
 using std::strftime;

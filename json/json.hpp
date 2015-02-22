@@ -60,6 +60,8 @@ public:
     using Int = int;
     using Double = double;
 
+    friend class Serializer;
+
     enum class Type {
         OBJECT,
         ARRAY,
@@ -89,11 +91,15 @@ public:
 
     Value(Double value);
 
-    Value(const Value& value) { operator=(value); }
+    Value(const Value& value);
+
+    Value(Value&& value);
 
     ~Value();
 
     Value& operator=(const Value& value);
+
+    Value& operator=(Value&& value);
 
     Value& append(const Value& value);
 
@@ -218,7 +224,8 @@ public:
             }
             return (m_array_const_iterator == it.m_array_const_iterator);
         }
-
+    public:
+        const char* key() const;
     private:
         Value::Type m_type;
 
@@ -273,7 +280,7 @@ public:
 
         const Value& operator->() const { return const_deref(); }
 
-        bool operator!=(const Iterator& it) const {
+        bool operator!=(const ConstIterator& it) const {
             return !is_const_equal(it);
         }
     };

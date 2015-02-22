@@ -211,7 +211,7 @@ void Value::assert_container() const {
 
 void Value::assert_type(Type type) const {
     if (type != m_type) {
-        throw std::domain_error("Invalid JSON type");
+        throw std::domain_error("Invalid JSON type " + std::to_string(int(type)) + " " + std::to_string(int(m_type)));
     }
 }
 
@@ -237,6 +237,16 @@ void Value::create_container(Type type) {
     default:
         break;
     }
+}
+
+Value::Value(const Value& value) : m_type(value.m_type) {
+    create_container(m_type);
+    operator=(value);
+}
+
+Value::Value(Value&& value) : m_type(value.m_type) {
+    create_container(m_type);
+    operator=(std::move(value));
 }
 
 Value& Value::operator=(const Value& value) {
@@ -269,6 +279,42 @@ Value& Value::operator=(const Value& value) {
     default:
         break;
     }
+
+    return *this;
+}
+
+Value& Value::operator=(Value&& value) {
+    if (&value == this) {
+        return *this;
+    }
+
+    if (value.m_type != m_type) {
+        this->~Value();
+        create_container(value.m_type);
+    }
+
+    switch (m_type) {
+    case Type::OBJECT:
+        m_object = std::move(value.m_object);
+        break;
+    case Type::ARRAY:
+        m_array = std::move(value.m_array);
+        break;
+    case Type::STRING:
+        m_string = std::move(value.m_string);
+        break;
+    case Type::NUMBER:
+        m_number = std::move(value.m_number);
+        break;
+    case Type::BOOLEAN:
+        m_boolean = std::move(value.m_boolean);
+        break;
+    case Type::EMPTY:
+    default:
+        break;
+    }
+
+    value.~Value();
 
     return *this;
 }
@@ -330,9 +376,9 @@ Value& Value::Value::operator[](const std::string& key) {
     }
     assert_type(Type::OBJECT);
 
-    for (auto& key_value : m_object) {
-        if (key == key_value.first) {
-            return key_value.second;
+    for (auto& pair : m_object) {
+        if (key == pair.first) {
+            return pair.second;
         }
     }
 
@@ -399,7 +445,7 @@ Value& Value::append(const Value& value) {
 }
 
 bool Value::empty() const {
-    return !!size();
+    return (0 == size()) ? true : false;
 }
 
 bool Value::operator==(const Value& value) const {
@@ -505,4 +551,11 @@ Value::ConstIterator Value::cend() const {
         return m_array.cend();
     }
     return ConstIterator();
+}
+
+const char* Value::BaseIterator::key() const {
+    if (Value::Type::OBJECT == m_type) {
+        return m_object_const_iterator->first.c_str();
+    }
+    return "";
 }
