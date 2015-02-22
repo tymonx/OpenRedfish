@@ -88,9 +88,9 @@ int main(void) {
     val["key5"]["inkey4"] = "Test1";
     val["key5"]["inkey5"] = "Test2";
 
-    json::Value val2 = nullptr;
+    json::Value val2("aa", 2);
     val2["key1"] = 5;
-    val2["key2"];
+    val2["key2"] = {1, 3, 5};
     val2["key3"] = -7;
     val2["key4"].push_back(json::Value::Pair("subtest1", 5));
     val2["key4"].push_back(json::Value::Pair("subtest2", true));
@@ -100,6 +100,10 @@ int main(void) {
     val2["key6"][1] = 2;
     val2["key6"][2] = 1;
     val2["key6"][3] = 0;
+    using Pair = json::Value::Pair;
+    (val2["key7"] = {Pair("a", 2), Pair("b", 3), Pair("b", 4)})[0];
+    val2["key8"] = json::Value(5, nullptr);
+    val2["key8"].assign(5, true);
 
     cout << "Size: " << sizeof(json::Value) << endl;
     cout << "Serializer: " << json::Serializer(val) << endl;

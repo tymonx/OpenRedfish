@@ -79,11 +79,11 @@ public:
 
         Number(Double value) : m_type(Type::DOUBLE), m_Double(value) { }
 
-        operator Int() const;
+        explicit operator Int() const;
 
-        operator Uint() const;
+        explicit operator Uint() const;
 
-        operator Double() const;
+        explicit operator Double() const;
 
         bool operator==(const Number& number) const;
 
@@ -129,6 +129,12 @@ public:
 
     Value(const Number& number);
 
+    Value(size_t count, const Value& value);
+
+    Value(std::initializer_list<Pair> init_list);
+
+    Value(std::initializer_list<Value> init_list);
+
     Value(const Value& value);
 
     Value(Value&& value);
@@ -138,6 +144,20 @@ public:
     Value& operator=(const Value& value);
 
     Value& operator=(Value&& value);
+
+    Value& operator=(std::initializer_list<Pair> init_list);
+
+    Value& operator=(std::initializer_list<Value> init_list);
+
+    void assign(size_t count, const Value& value);
+
+    void assign(std::initializer_list<Pair> init_list) {
+        operator=(init_list);
+    }
+
+    void assign(std::initializer_list<Value> init_list) {
+        operator=(init_list);
+    }
 
     void push_back(const Pair& pair);
 
@@ -165,6 +185,8 @@ public:
 
     Type type() const { return m_type; }
 
+    explicit operator String&();
+
     explicit operator const String&() const;
 
     explicit operator const char*() const;
@@ -178,6 +200,10 @@ public:
     explicit operator Uint() const;
 
     explicit operator Double() const;
+
+    explicit operator Array&();
+
+    explicit operator Number&();
 
     explicit operator const Array&() const;
 
@@ -363,7 +389,9 @@ private:
     };
 
     void create_container(Type type);
+    void assert_container(Type new_type);
     void assert_container() const;
+    void assert_type(Type type);
     void assert_type(Type type) const;
 };
 

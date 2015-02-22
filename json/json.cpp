@@ -165,8 +165,7 @@ Value::Value(const Pair& pair) : m_type(Type::MEMBERS) {
     new (&m_members) Members{pair};
 }
 
-Value::Value(const String& key, const Value& value) :
-    m_type(Type::MEMBERS) {
+Value::Value(const String& key, const Value& value) : m_type(Type::MEMBERS) {
     new (&m_members) Members{std::make_pair(key, value)};
 }
 
@@ -184,6 +183,23 @@ Value::Value(Double value) : m_type(Type::NUMBER) {
 
 Value::Value(const Number& number) : m_type(Type::NUMBER) {
     new (&m_number) Number(number);
+}
+
+Value::Value(size_t count, const Value& value) : m_type(Type::ARRAY) {
+    new (&m_array) Array(count, value);
+}
+
+Value::Value(std::initializer_list<Pair> init_list) : m_type(Type::MEMBERS) {
+    new (&m_members) Members();
+
+    for (const auto& pair : init_list) {
+        (*this)[pair.first] = pair.second;
+    }
+}
+
+Value::Value(std::initializer_list<Value> init_list) : m_type(Type::ARRAY) {
+    new (&m_array) Array();
+    m_array = init_list;
 }
 
 Value::~Value() {
@@ -207,16 +223,36 @@ Value::~Value() {
     }
 }
 
+void Value::assert_container(Type new_type) {
+    if ((Type::MEMBERS == m_type) || (Type::ARRAY == m_type)) return;
+
+    if (Type::EMPTY == m_type) {
+        *this = std::move(Value(new_type));
+    } else {
+        throw std::domain_error("Invalid JSON type ");
+    }
+}
+
 void Value::assert_container() const {
-    if ((Type::MEMBERS != m_type) && (Type::ARRAY != m_type)) {
-        throw std::domain_error("Invalid JSON type");
+    if ((Type::MEMBERS == m_type) || (Type::ARRAY == m_type)) return;
+
+    throw std::domain_error("Invalid JSON type");
+}
+
+void Value::assert_type(Type type) {
+    if (m_type == type) return;
+
+    if (Type::EMPTY == m_type) {
+        *this = std::move(Value(type));
+    } else {
+        throw std::domain_error("Invalid JSON type ");
     }
 }
 
 void Value::assert_type(Type type) const {
-    if (type != m_type) {
-        throw std::domain_error("Invalid JSON type " + std::to_string(int(type)) + " " + std::to_string(int(m_type)));
-    }
+    if (m_type == type) return;
+
+    throw std::domain_error("Invalid JSON type ");
 }
 
 void Value::create_container(Type type) {
@@ -323,6 +359,32 @@ Value& Value::operator=(Value&& value) {
     return *this;
 }
 
+Value& Value::operator=(std::initializer_list<Pair> init_list) {
+    this->~Value();
+    create_container(Type::MEMBERS);
+
+    for (const auto& pair : init_list) {
+        (*this)[pair.first] = pair.second;
+    }
+
+    return *this;
+}
+
+Value& Value::operator=(std::initializer_list<Value> init_list) {
+    this->~Value();
+    create_container(Type::ARRAY);
+
+    m_array = init_list;
+
+    return *this;
+}
+
+void Value::assign(size_t count, const Value& value) {
+    this->~Value();
+    create_container(Type::ARRAY);
+    new (&m_array) Array(count, value);
+}
+
 size_t Value::size() const {
     size_t size = 0;
 
@@ -388,9 +450,6 @@ size_t Value::erase(const String& key) {
 }
 
 Value& Value::Value::operator[](const String& key) {
-    if (Type::EMPTY == m_type) {
-        operator=(std::move(Value(Type::MEMBERS)));
-    }
     assert_type(Type::MEMBERS);
 
     for (auto& pair : m_members) {
@@ -417,10 +476,7 @@ const Value& Value::Value::operator[](const String& key) const {
 }
 
 Value& Value::Value::operator[](size_t index) {
-    if (Type::EMPTY == m_type) {
-        operator=(std::move(Value(Type::ARRAY)));
-    }
-    assert_container();
+    assert_container(Type::ARRAY);
 
     if (Type::ARRAY == m_type) {
         if (size() == index) {
@@ -441,33 +497,28 @@ const Value& Value::Value::operator[](size_t index) const {
 }
 
 void Value::push_back(const Value& value) {
-    if (Type::EMPTY == m_type) {
-        operator=(std::move(Value(Type::ARRAY)));
-    }
     assert_type(Type::ARRAY);
 
     m_array.push_back(value);
 }
 
 void Value::push_back(const Pair& pair) {
-    if (Type::EMPTY == m_type) {
-        operator=(std::move(Value(Type::MEMBERS)));
-    }
-    assert_container();
+    assert_container(Type::MEMBERS);
 
     if (Type::MEMBERS == m_type) {
-        m_members.push_back(pair);
+        operator[](pair.first) = pair.second;
     } else {
         m_array.push_back(pair);
     }
 }
 
 void Value::pop_back() {
-    assert_container();
     if (Type::MEMBERS == m_type) {
         m_members.pop_back();
-    } else {
+    } else if (Type::ARRAY == m_type) {
         m_array.pop_back();
+    } else {
+        *this = std::move(Value());
     }
 }
 
@@ -511,6 +562,11 @@ bool json::operator==(const Value& val1, const Value& val2) {
     return result;
 }
 
+Value::operator String&() {
+    assert_type(Type::STRING);
+    return m_string;
+}
+
 Value::operator const String&() const {
     assert_type(Type::STRING);
     return m_string;
@@ -544,6 +600,16 @@ Value::operator Uint() const {
 Value::operator Double() const {
     assert_type(Type::NUMBER);
     return Double(m_number);
+}
+
+Value::operator Array&() {
+    assert_type(Type::ARRAY);
+    return m_array;
+}
+
+Value::operator Number&() {
+    assert_type(Type::NUMBER);
+    return m_number;
 }
 
 Value::operator const Array&() const {
