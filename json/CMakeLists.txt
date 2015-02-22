@@ -29,9 +29,8 @@
 
 set(SOURCES
     test.cpp
-    json.cpp
-    serializer.cpp
 )
 
+add_library(json-lib STATIC json.cpp serializer.cpp)
 add_executable(json ${SOURCES})
-target_link_libraries(json jsoncpp)
+target_link_libraries(json json-lib)

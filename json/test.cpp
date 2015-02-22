@@ -38,7 +38,6 @@
  * */
 
 #include "json.hpp"
-#include <jsoncpp/json/json.h>
 #include "serializer.hpp"
 
 #include <iostream>
@@ -46,7 +45,6 @@
 using namespace std;
 
 int main(void) {
-
     json::Value val("Test");
 
     cout << std::string(val) << endl;
@@ -54,7 +52,6 @@ int main(void) {
     val = json::Value(true);
 
     cout << bool(val) << endl;
-
     val = nullptr;
 
     cout << (val != nullptr) << endl;
