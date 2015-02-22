@@ -161,8 +161,8 @@ Value::Value(const String& str) : m_type(Type::STRING) {
     new (&m_string) String(str);
 }
 
-Value::Value(const Pair& key_value) : m_type(Type::OBJECT) {
-    new (&m_object) Object{key_value};
+Value::Value(const Pair& pair) : m_type(Type::OBJECT) {
+    new (&m_object) Object{pair};
 }
 
 Value::Value(const String& key, const Value& value) :
@@ -180,6 +180,10 @@ Value::Value(Int value) : m_type(Type::NUMBER) {
 
 Value::Value(Double value) : m_type(Type::NUMBER) {
     new (&m_number) Number(value);
+}
+
+Value::Value(const Number& number) : m_type(Type::NUMBER) {
+    new (&m_number) Number(number);
 }
 
 Value::~Value() {
@@ -390,9 +394,9 @@ Value& Value::Value::operator[](const String& key) {
 const Value& Value::Value::operator[](const String& key) const {
     assert_type(Type::OBJECT);
 
-    for (const auto& key_value : m_object) {
-        if (key == key_value.first) {
-            return key_value.second;
+    for (const auto& pair : m_object) {
+        if (key == pair.first) {
+            return pair.second;
         }
     }
 
@@ -515,6 +519,11 @@ Value::operator Uint() const {
 Value::operator Double() const {
     assert_type(Type::NUMBER);
     return Double(m_number);
+}
+
+Value::operator const Number&() const {
+    assert_type(Type::NUMBER);
+    return m_number;
 }
 
 Value::Iterator Value::begin() {

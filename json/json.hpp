@@ -63,7 +63,40 @@ public:
     using Int = int;
     using Double = double;
 
-    friend class Serializer;
+    class Number {
+    public:
+        enum class Type {
+            INT,
+            UINT,
+            DOUBLE
+        };
+
+        Number() : m_type(Type::INT), m_int(0) { }
+
+        Number(Int value) : m_type(Type::INT), m_int(value) { }
+
+        Number(Uint value) : m_type(Type::UINT), m_uint(value) { }
+
+        Number(Double value) : m_type(Type::DOUBLE), m_Double(value) { }
+
+        operator Int() const;
+
+        operator Uint() const;
+
+        operator Double() const;
+
+        bool operator==(const Number& number) const;
+
+        Type type() const { return m_type; }
+    private:
+        enum Type m_type;
+
+        union {
+            Int m_int;
+            Uint m_uint;
+            Double m_Double;
+        };
+    };
 
     enum class Type {
         OBJECT,
@@ -84,7 +117,7 @@ public:
 
     Value(const String& str);
 
-    Value(const Pair& key_value);
+    Value(const Pair& pair);
 
     Value(const String& key, const Value& value);
 
@@ -93,6 +126,8 @@ public:
     Value(Int value);
 
     Value(Double value);
+
+    Value(const Number& number);
 
     Value(const Value& value);
 
@@ -135,6 +170,8 @@ public:
     explicit operator Uint() const;
 
     explicit operator Double() const;
+
+    explicit operator const Number&() const;
 
     bool operator==(const Value& value) const;
 
@@ -301,38 +338,7 @@ public:
     ConstIterator cend() const;
 
 private:
-    class Number {
-    public:
-        enum class Type {
-            INT,
-            UINT,
-            DOUBLE
-        };
-
-        Number() : m_type(Type::INT), m_int(0) { }
-
-        Number(Int value) : m_type(Type::INT), m_int(value) { }
-
-        Number(Uint value) : m_type(Type::UINT), m_uint(value) { }
-
-        Number(Double value) : m_type(Type::DOUBLE), m_Double(value) { }
-
-        operator Int() const;
-
-        operator Uint() const;
-
-        operator Double() const;
-
-        bool operator==(const Number& number) const;
-
-        enum Type m_type;
-
-        union {
-            Int m_int;
-            Uint m_uint;
-            Double m_Double;
-        };
-    };
+    enum Type m_type;
 
     union {
         Object m_object;
@@ -341,8 +347,6 @@ private:
         Number m_number;
         Bool m_boolean;
     };
-
-    enum Type m_type;
 
     void create_container(Type type);
     void assert_container() const;
