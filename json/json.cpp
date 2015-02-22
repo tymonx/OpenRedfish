@@ -416,7 +416,7 @@ void Value::clear() {
 }
 
 size_t Value::erase(const String& key) {
-    if (Type::MEMBERS != m_type) { return 0; }
+    if (!is_members()) { return 0; }
 
     for (auto it = m_members.begin(); it != m_members.end(); it++) {
         if (key == it->first) {
@@ -429,8 +429,8 @@ size_t Value::erase(const String& key) {
 }
 
 Value& Value::Value::operator[](const String& key) {
-    if (Type::MEMBERS != m_type) {
-        if (Type::EMPTY == m_type) { *this = std::move(Value(Type::MEMBERS)); }
+    if (!is_members()) {
+        if (is_null()) { *this = std::move(Value(Type::MEMBERS)); }
         else { return *this; }
     }
 
@@ -446,7 +446,7 @@ Value& Value::Value::operator[](const String& key) {
 }
 
 const Value& Value::Value::operator[](const String& key) const {
-    if (Type::MEMBERS != m_type) { return *this; }
+    if (!is_members()) { return *this; }
 
     for (const auto& pair : m_members) {
         if (key == pair.first) {
@@ -458,16 +458,16 @@ const Value& Value::Value::operator[](const String& key) const {
 }
 
 Value& Value::Value::operator[](size_t index) {
-    if (Type::EMPTY == m_type) { *this = std::move(Value(Type::ARRAY)); }
+    if (is_null()) { *this = std::move(Value(Type::ARRAY)); }
 
-    if (Type::ARRAY == m_type) {
+    if (is_array()) {
         if (size() == index) {
             m_array.emplace_back(std::move(Value()));
         }
         return m_array[index];
     }
 
-    if  (Type::MEMBERS == m_type) {
+    if  (is_members()) {
         return m_members[index].second;
     }
 
@@ -475,11 +475,11 @@ Value& Value::Value::operator[](size_t index) {
 }
 
 const Value& Value::Value::operator[](size_t index) const {
-    if (Type::ARRAY == m_type) {
+    if (is_array()) {
         return m_array[index];
     }
 
-    if (Type::MEMBERS == m_type) {
+    if (is_members()) {
         return m_members[index].second;
     }
 
@@ -487,34 +487,34 @@ const Value& Value::Value::operator[](size_t index) const {
 }
 
 void Value::push_back(const Value& value) {
-    if (Type::EMPTY == m_type) { *this = std::move(Value(Type::ARRAY)); }
+    if (is_null()) { *this = std::move(Value(Type::ARRAY)); }
 
-    if (Type::ARRAY == m_type) {
+    if (is_array()) {
         m_array.push_back(value);
     }
 }
 
 void Value::push_back(const Pair& pair) {
-    if (Type::EMPTY == m_type) { *this = std::move(Value(Type::MEMBERS)); }
+    if (is_null()) { *this = std::move(Value(Type::MEMBERS)); }
 
-    if (Type::MEMBERS == m_type) {
+    if (is_members()) {
         operator[](pair.first) = pair.second;
         return;
     }
 
-    if (Type::ARRAY == m_type) {
+    if (is_array()) {
         m_array.push_back(pair);
         return;
     }
 }
 
 void Value::pop_back() {
-    if (Type::ARRAY == m_type) {
+    if (is_array()) {
         m_array.pop_back();
         return;
     }
 
-    if (Type::MEMBERS == m_type) {
+    if (is_members()) {
         m_members.pop_back();
         return;
     }
@@ -567,11 +567,11 @@ bool json::operator!=(const Value& val1, const Value& val2) {
 }
 
 Value::Iterator Value::begin() {
-    if (Type::MEMBERS == m_type) {
+    if (is_members()) {
         return m_members.begin();
     }
 
-    if (Type::ARRAY == m_type) {
+    if (is_array()) {
         return m_array.begin();
     }
 
@@ -579,11 +579,11 @@ Value::Iterator Value::begin() {
 }
 
 Value::Iterator Value::end() {
-    if (Type::MEMBERS == m_type) {
+    if (is_members()) {
         return m_members.end();
     }
 
-    if (Type::ARRAY == m_type) {
+    if (is_array()) {
         return m_array.end();
     }
 
@@ -599,11 +599,11 @@ Value::ConstIterator Value::end() const {
 }
 
 Value::ConstIterator Value::cbegin() const {
-    if (Type::MEMBERS == m_type) {
+    if (is_members()) {
         return m_members.cbegin();
     }
 
-    if (Type::ARRAY == m_type) {
+    if (is_array()) {
         return m_array.cbegin();
     }
 
@@ -611,11 +611,11 @@ Value::ConstIterator Value::cbegin() const {
 }
 
 Value::ConstIterator Value::cend() const {
-    if (Type::MEMBERS == m_type) {
+    if (is_members()) {
         return m_members.cend();
     }
 
-    if (Type::ARRAY == m_type) {
+    if (is_array()) {
         return m_array.cend();
     }
 
@@ -644,11 +644,11 @@ bool json::operator==(const Value::BaseIterator& it1,
         return false;
     }
 
-    if (Value::Type::MEMBERS == it1.m_type) {
+    if (it1.is_members()) {
         return (it1.m_members_iterator == it2.m_members_iterator);
     }
 
-    if (Value::Type::ARRAY == it1.m_type) {
+    if (it1.is_array()) {
         return (it1.m_array_iterator == it2.m_array_iterator);
     }
 
@@ -659,7 +659,7 @@ bool json::operator!=(const Value::BaseIterator& it1,
         const Value::BaseIterator& it2) { return !operator==(it1, it2); }
 
 void Value::BaseIterator::increment() {
-    if (Value::Type::MEMBERS == m_type) {
+    if (is_members()) {
         m_members_iterator++;
     } else {
         m_array_iterator++;
@@ -667,7 +667,7 @@ void Value::BaseIterator::increment() {
 }
 
 void Value::BaseIterator::decrement() {
-    if (Value::Type::MEMBERS == m_type) {
+    if (is_members()) {
         m_members_iterator--;
     } else {
         m_array_iterator--;
@@ -675,7 +675,7 @@ void Value::BaseIterator::decrement() {
 }
 
 void Value::BaseIterator::const_increment() {
-    if (Value::Type::MEMBERS == m_type) {
+    if (is_members()) {
         m_members_const_iterator++;
     } else {
         m_array_const_iterator++;
@@ -683,7 +683,7 @@ void Value::BaseIterator::const_increment() {
 }
 
 void Value::BaseIterator::const_decrement() {
-    if (Value::Type::MEMBERS == m_type) {
+    if (is_members()) {
         m_members_const_iterator--;
     } else {
         m_array_const_iterator--;
@@ -691,14 +691,14 @@ void Value::BaseIterator::const_decrement() {
 }
 
 Value& Value::BaseIterator::deref() {
-    if (Value::Type::MEMBERS == m_type) {
+    if (is_members()) {
         return m_members_iterator->second;
     }
     return *m_array_iterator;
 }
 
 const Value& Value::BaseIterator::const_deref() const {
-    if (Value::Type::MEMBERS == m_type) {
+    if (is_members()) {
         return m_members_const_iterator->second;
     }
     return *m_array_const_iterator;

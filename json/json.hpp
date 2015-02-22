@@ -183,6 +183,18 @@ public:
 
     Type type() const { return m_type; }
 
+    bool is_string() const { return Type::STRING == m_type; }
+
+    bool is_members() const { return Type::MEMBERS == m_type; }
+
+    bool is_array() const { return Type::ARRAY == m_type; }
+
+    bool is_number() const { return Type::NUMBER == m_type; }
+
+    bool is_boolean() const { return Type::BOOLEAN == m_type; }
+
+    bool is_null() const { return Type::EMPTY == m_type; }
+
     explicit operator String&() { return m_string; }
 
     explicit operator const String&() const { return m_string; }
@@ -240,6 +252,10 @@ public:
         Value& deref();
 
         const Value& const_deref() const;
+
+        bool is_array() const { return Value::Type::ARRAY == m_type; }
+
+        bool is_members() const { return Value::Type::MEMBERS == m_type; }
     private:
         Value::Type m_type;
 

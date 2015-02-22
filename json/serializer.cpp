@@ -52,8 +52,7 @@ Serializer::Serializer(const Value& value) : m_serialized() {
 }
 
 Serializer& Serializer::operator<<(const Value& value) {
-    if ((Value::Type::MEMBERS == value.type()) ||
-        (Value::Type::EMPTY == value.type())) {
+    if (value.is_members() || value.is_null()) {
         write_members(value);
     }
 
