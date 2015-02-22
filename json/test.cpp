@@ -38,6 +38,7 @@
  * */
 
 #include "json.hpp"
+#include <jsoncpp/json/json.h>
 #include "serializer.hpp"
 
 #include <iostream>
@@ -90,6 +91,9 @@ int main(void) {
     json::Serializer serializer;
 
     serializer << val << val << val;
+    Json::Value test;
+    cout << "Size: " << sizeof(json::Value) << endl;
+    cout << "Size: " << sizeof(test) << endl;
     cout << "Serializer: " << json::Serializer(val) << endl;
     cout << "Serializer: " << serializer << endl;
 

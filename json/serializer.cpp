@@ -61,7 +61,7 @@ Serializer& Serializer::operator<<(const Value& value) {
 void Serializer::write_object(const Value& value) {
     m_serialized += '{';
 
-    if (!value.empty()) {
+    if (value.size() > 0) {
         for (auto it = value.cbegin(); it != value.cend(); it++) {
             write_string(it.key());
             m_serialized += ":";
@@ -103,7 +103,7 @@ void Serializer::write_value(const Value& value) {
 void Serializer::write_array(const Value& value) {
     m_serialized += '[';
 
-    if (!value.empty()) {
+    if (value.size() > 0) {
         for (const auto& val : value) {
             write_value(val);
             m_serialized += ",";
@@ -116,7 +116,7 @@ void Serializer::write_array(const Value& value) {
 }
 
 void Serializer::write_string(const Value& value) {
-    m_serialized += "\"" + std::string(value) + "\"";
+    m_serialized += "\"" + Value::String(value) + "\"";
 }
 
 void Serializer::write_number(const Value& value) {
@@ -136,7 +136,7 @@ void Serializer::write_number(const Value& value) {
 }
 
 void Serializer::write_boolean(const Value& value) {
-    m_serialized += (true == bool(value)) ? "true" : "false";
+    m_serialized += (true == Value::Bool(value)) ? "true" : "false";
 }
 
 void Serializer::write_empty(const Value&) {

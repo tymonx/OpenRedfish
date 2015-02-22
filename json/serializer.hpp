@@ -58,13 +58,13 @@ public:
 
     Serializer& operator<<(const Value& value);
 
-    const std::string& str() const { return m_serialized; }
+    const Value::String& str() const { return m_serialized; }
     const char* c_str() const { return str().c_str(); }
 
     explicit operator const char*() { return m_serialized.c_str(); }
-    explicit operator const std::string&() { return m_serialized; }
+    explicit operator const Value::String&() { return m_serialized; }
 private:
-    std::string m_serialized;
+    Value::String m_serialized;
 
     void write_object(const Value& value);
     void write_value(const Value& value);

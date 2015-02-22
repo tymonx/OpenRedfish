@@ -34,3 +34,4 @@ set(SOURCES
 )
 
 add_executable(json ${SOURCES})
+target_link_libraries(json jsoncpp)

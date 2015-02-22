@@ -53,9 +53,12 @@ namespace json {
 
 class Value {
 public:
-    using Pair = std::pair<std::string, Value>;
+    using String = std::string;
+    using Pair = std::pair<String, Value>;
     using Object = std::vector<Pair>;
     using Array = std::vector<Value>;
+    using Bool = bool;
+    using Null = std::nullptr_t;
     using Uint = unsigned int;
     using Int = int;
     using Double = double;
@@ -73,17 +76,17 @@ public:
 
     Value(Type type = Type::EMPTY);
 
-    Value(std::nullptr_t);
+    Value(Null);
 
-    Value(bool boolean);
+    Value(Bool Boolean);
 
     Value(const char* str);
 
-    Value(const std::string& str);
+    Value(const String& str);
 
     Value(const Pair& key_value);
 
-    Value(const std::string& key, const Value& value);
+    Value(const String& key, const Value& value);
 
     Value(Uint value);
 
@@ -109,9 +112,9 @@ public:
 
     bool empty() const;
 
-    Value& operator[](const std::string& key);
+    Value& operator[](const String& key);
 
-    const Value& operator[](const std::string& key) const;
+    const Value& operator[](const String& key) const;
 
     Value& operator[](size_t index);
 
@@ -119,13 +122,13 @@ public:
 
     Type type() const { return m_type; }
 
-    explicit operator const std::string&() const;
+    explicit operator const String&() const;
 
     explicit operator const char*() const;
 
-    explicit operator bool() const;
+    explicit operator Bool() const;
 
-    explicit operator std::nullptr_t() const;
+    explicit operator Null() const;
 
     explicit operator Int() const;
 
@@ -334,9 +337,9 @@ private:
     union {
         Object m_object;
         Array m_array;
-        std::string m_string;
+        String m_string;
         Number m_number;
-        bool m_boolean;
+        Bool m_boolean;
     };
 
     enum Type m_type;

@@ -147,25 +147,25 @@ Value::Value(Type type) : m_type(type) {
     create_container(m_type);
 }
 
-Value::Value(std::nullptr_t) : m_type(Type::EMPTY) { }
+Value::Value(Null) : m_type(Type::EMPTY) { }
 
-Value::Value(bool boolean) : m_type(Type::BOOLEAN) {
+Value::Value(Bool boolean) : m_type(Type::BOOLEAN) {
     m_boolean = boolean;
 }
 
 Value::Value(const char* str) : m_type(Type::STRING) {
-    new (&m_string) std::string(str);
+    new (&m_string) String(str);
 }
 
-Value::Value(const std::string& str) : m_type(Type::STRING) {
-    new (&m_string) std::string(str);
+Value::Value(const String& str) : m_type(Type::STRING) {
+    new (&m_string) String(str);
 }
 
 Value::Value(const Pair& key_value) : m_type(Type::OBJECT) {
     new (&m_object) Object{key_value};
 }
 
-Value::Value(const std::string& key, const Value& value) :
+Value::Value(const String& key, const Value& value) :
     m_type(Type::OBJECT) {
     new (&m_object) Object{std::make_pair(key, value)};
 }
@@ -225,7 +225,7 @@ void Value::create_container(Type type) {
         new (&m_array) Array();
         break;
     case Type::STRING:
-        new (&m_string) std::string();
+        new (&m_string) String();
         break;
     case Type::NUMBER:
         new (&m_number) Number();
@@ -370,7 +370,7 @@ void Value::clear() {
     }
 }
 
-Value& Value::Value::operator[](const std::string& key) {
+Value& Value::Value::operator[](const String& key) {
     if (Type::EMPTY == m_type) {
         operator=(std::move(Value(Type::OBJECT)));
     }
@@ -387,7 +387,7 @@ Value& Value::Value::operator[](const std::string& key) {
     return m_object.back().second;
 }
 
-const Value& Value::Value::operator[](const std::string& key) const {
+const Value& Value::Value::operator[](const String& key) const {
     assert_type(Type::OBJECT);
 
     for (const auto& key_value : m_object) {
@@ -482,7 +482,7 @@ bool Value::operator==(const Value& value) const {
     return result;
 }
 
-Value::operator const std::string&() const {
+Value::operator const String&() const {
     assert_type(Type::STRING);
     return m_string;
 }
@@ -492,12 +492,12 @@ Value::operator const char*() const {
     return m_string.c_str();
 }
 
-Value::operator bool() const {
+Value::operator Bool() const {
     assert_type(Type::BOOLEAN);
     return m_boolean;
 }
 
-Value::operator std::nullptr_t() const {
+Value::operator Null() const {
     assert_type(Type::EMPTY);
     return nullptr;
 }
