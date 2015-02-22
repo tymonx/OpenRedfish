@@ -47,6 +47,12 @@
 
 using namespace json;
 
+Serializer::Serializer() : m_serialized() { }
+
+Serializer::Serializer(const Value& value) : m_serialized() {
+    operator<<(value);
+}
+
 Serializer& Serializer::operator<<(const Value& value) {
     if ((Value::Type::MEMBERS != value.type()) &&
         (Value::Type::EMPTY != value.type())) {
