@@ -143,7 +143,7 @@ bool json::operator==(const Number& num1, const Number& num2) {
 }
 
 bool json::operator!=(const Number& num1, const Number& num2) {
-    return !operator==(num1, num2);
+    return !(num1 == num2);
 }
 
 Value::Value(Type type) : m_type(type) {
@@ -567,7 +567,7 @@ bool json::operator==(const Value& val1, const Value& val2) {
 }
 
 bool json::operator!=(const Value& val1, const Value& val2) {
-    return !operator==(val1, val2);
+    return !(val1 == val2);
 }
 
 Value::Iterator Value::begin() {
@@ -660,7 +660,7 @@ bool json::operator==(const Value::BaseIterator& it1,
 }
 
 bool json::operator!=(const Value::BaseIterator& it1,
-        const Value::BaseIterator& it2) { return !operator==(it1, it2); }
+        const Value::BaseIterator& it2) { return !(it1 == it2); }
 
 void Value::BaseIterator::increment() {
     if (is_members()) {
