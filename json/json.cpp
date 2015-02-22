@@ -44,22 +44,29 @@
 #include "json.hpp"
 
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 using namespace json;
 
-template<typename T> Value::Number::operator T() const {
-    T value;
+Value::Number::operator Uint() const {
+    Uint value;
 
-    switch(m_type) {
+    switch (m_type) {
     case Type::INT:
-        value = T(m_int);
+        if (std::signbit(m_int)) {
+            throw std::underflow_error("Number underflow");
+        }
+        value = Uint(m_int);
         break;
     case Type::UINT:
-        value = T(m_uint);
+        value = m_uint;
         break;
     case Type::DOUBLE:
-        value = T(std::round(m_double));
+        if (std::signbit(m_double)) {
+            throw std::underflow_error("Number underflow");
+        }
+        value = Uint(std::round(m_double));
         break;
     default:
         value = 0;
@@ -69,15 +76,34 @@ template<typename T> Value::Number::operator T() const {
     return value;
 }
 
-template Value::Number::operator int32_t() const;
-template Value::Number::operator int64_t() const;
-template Value::Number::operator uint32_t() const;
-template Value::Number::operator uint64_t() const;
+Value::Number::operator Int() const {
+    Int value;
+
+    switch (m_type) {
+    case Type::INT:
+        value = m_int;
+        break;
+    case Type::UINT:
+        if (std::numeric_limits<Int>::max() < m_uint) {
+            throw std::overflow_error("Number overflow");
+        }
+        value = Int(m_uint);
+        break;
+    case Type::DOUBLE:
+        value = Int(std::round(m_double));
+        break;
+    default:
+        value = 0;
+        break;
+    }
+
+    return value;
+}
 
 Value::Number::operator double() const {
     double value;
 
-    switch(m_type) {
+    switch (m_type) {
     case Type::INT:
         value = m_int;
         break;
@@ -93,6 +119,28 @@ Value::Number::operator double() const {
     }
 
     return value;
+}
+
+bool Value::Number::operator==(const Number& number) const {
+    bool result = false;
+
+    switch (m_type) {
+    case Type::INT:
+        result = (m_int == Int(number));
+        break;
+    case Type::UINT:
+        result = (m_uint == Uint(number));
+        break;
+    case Type::DOUBLE:
+        result = std::fabs(m_double - double(number)) <
+            std::numeric_limits<double>::epsilon();
+        break;
+    default:
+        result = false;
+        break;
+    }
+
+    return result;
 }
 
 Value::Value(Type type) : m_type(type) {
@@ -122,19 +170,11 @@ Value::Value(const std::string& key, const Value& value) :
     new (&m_object) Object{std::make_pair(key, value)};
 }
 
-Value::Value(uint32_t value) : m_type(Type::NUMBER) {
+Value::Value(Uint value) : m_type(Type::NUMBER) {
     new (&m_number) Number(value);
 }
 
-Value::Value(uint64_t value) : m_type(Type::NUMBER) {
-    new (&m_number) Number(value);
-}
-
-Value::Value(int32_t value) : m_type(Type::NUMBER) {
-    new (&m_number) Number(value);
-}
-
-Value::Value(int64_t value) : m_type(Type::NUMBER) {
+Value::Value(Int value) : m_type(Type::NUMBER) {
     new (&m_number) Number(value);
 }
 
@@ -143,7 +183,7 @@ Value::Value(double value) : m_type(Type::NUMBER) {
 }
 
 Value::~Value() {
-    switch(m_type) {
+    switch (m_type) {
     case Type::OBJECT:
         m_object.~vector();
         break;
@@ -177,7 +217,7 @@ void Value::assert_type(Type type) const {
 
 void Value::create_container(Type type) {
     m_type = type;
-    switch(type) {
+    switch (type) {
     case Type::OBJECT:
         new (&m_object) Object();
         break;
@@ -209,7 +249,7 @@ Value& Value::operator=(const Value& value) {
         create_container(value.m_type);
     }
 
-    switch(m_type) {
+    switch (m_type) {
     case Type::OBJECT:
         m_object = value.m_object;
         break;
@@ -236,7 +276,7 @@ Value& Value::operator=(const Value& value) {
 size_t Value::size() const {
     size_t size = 0;
 
-    switch(m_type) {
+    switch (m_type) {
     case Type::OBJECT:
         size = m_object.size();
         break;
@@ -262,7 +302,7 @@ size_t Value::size() const {
 }
 
 void Value::clear() {
-    switch(m_type) {
+    switch (m_type) {
     case Type::OBJECT:
         m_object.clear();
         break;
@@ -273,7 +313,7 @@ void Value::clear() {
         m_string.clear();
         break;
     case Type::NUMBER:
-        m_number = 0;
+        m_number = Int(0);
         break;
     case Type::BOOLEAN:
         m_boolean = false;
@@ -285,6 +325,9 @@ void Value::clear() {
 }
 
 Value& Value::Value::operator[](const std::string& key) {
+    if (Type::EMPTY == m_type) {
+        operator=(std::move(Value(Type::OBJECT)));
+    }
     assert_type(Type::OBJECT);
 
     for (auto& key_value : m_object) {
@@ -311,6 +354,9 @@ const Value& Value::Value::operator[](const std::string& key) const {
 }
 
 Value& Value::Value::operator[](size_t index) {
+    if (Type::EMPTY == m_type) {
+        operator=(std::move(Value(Type::ARRAY)));
+    }
     assert_container();
 
     Value* value;
@@ -343,9 +389,17 @@ const Value& Value::Value::operator[](size_t index) const {
     return *value;
 }
 
-void Value::push_back(const Value& value) {
+Value& Value::append(const Value& value) {
+    if (Type::EMPTY == m_type) {
+        operator=(std::move(Value(Type::ARRAY)));
+    }
     assert_type(Type::ARRAY);
     m_array.push_back(value);
+    return m_array.back();
+}
+
+bool Value::empty() const {
+    return !!size();
 }
 
 bool Value::operator==(const Value& value) const {
@@ -355,22 +409,24 @@ bool Value::operator==(const Value& value) const {
 
     bool result = false;
 
-    switch(m_type) {
+    switch (m_type) {
     case Type::OBJECT:
+        result = (m_object == value.m_object);
         break;
     case Type::ARRAY:
+        result = (m_array == value.m_array);
         break;
     case Type::STRING:
-        result = (value == m_string);
+        result = (m_string == value.m_string);
         break;
     case Type::NUMBER:
-        result = (value.m_number == m_number.type());
+        result = (m_number == value.m_number);
         break;
     case Type::BOOLEAN:
-        result = (value == m_boolean);
+        result = (m_boolean == value.m_boolean);
         break;
     case Type::EMPTY:
-        result = (value == nullptr);
+        result = true;
         break;
     default:
         result = false;
@@ -400,19 +456,14 @@ Value::operator std::nullptr_t() const {
     return nullptr;
 }
 
-Value::operator int32_t() const {
+Value::operator Int() const {
     assert_type(Type::NUMBER);
-    return int32_t(m_number);
+    return Int(m_number);
 }
 
-Value::operator uint32_t() const {
+Value::operator Uint() const {
     assert_type(Type::NUMBER);
-    return uint32_t(m_number);
-}
-
-Value::operator uint64_t() const {
-    assert_type(Type::NUMBER);
-    return uint64_t(m_number);
+    return Uint(m_number);
 }
 
 Value::operator double() const {
@@ -420,48 +471,38 @@ Value::operator double() const {
     return double(m_number);
 }
 
-bool Value::operator==(const std::string& str) const {
-    assert_type(Type::STRING);
-    return (str == m_string);
+Value::Iterator Value::begin() {
+    if (Type::OBJECT == m_type) {
+        return m_object.begin();
+    } else if (Type::ARRAY == m_type) {
+        return m_array.begin();
+    }
+    return Iterator();
 }
 
-bool Value::operator==(const char* str) const {
-    assert_type(Type::STRING);
-    return (str == m_string);
+Value::Iterator Value::end() {
+    if (Type::OBJECT == m_type) {
+        return m_object.end();
+    } else if (Type::ARRAY == m_type) {
+        return m_array.end();
+    }
+    return Iterator();
 }
 
-bool Value::operator==(bool boolean) const {
-    assert_type(Type::BOOLEAN);
-    return (boolean == m_boolean);
+Value::ConstIterator Value::cbegin() const {
+    if (Type::OBJECT == m_type) {
+        return m_object.cbegin();
+    } else if (Type::ARRAY == m_type) {
+        return m_array.cbegin();
+    }
+    return ConstIterator();
 }
 
-bool Value::operator==(std::nullptr_t empty) const {
-    assert_type(Type::EMPTY);
-    return (empty == nullptr);
-}
-
-bool Value::operator==(int32_t value) const {
-    assert_type(Type::NUMBER);
-    return int32_t(m_number) == value;
-}
-
-bool Value::operator==(int64_t value) const {
-    assert_type(Type::NUMBER);
-    return int64_t(m_number) == value;
-}
-
-bool Value::operator==(uint32_t value) const {
-    assert_type(Type::NUMBER);
-    return uint32_t(m_number) == value;
-}
-
-bool Value::operator==(uint64_t value) const {
-    assert_type(Type::NUMBER);
-    return uint64_t(m_number) == value;
-}
-
-bool Value::operator==(double value) const {
-    assert_type(Type::NUMBER);
-    return fabs(value - double(m_number)) <
-        std::numeric_limits<double>::epsilon();
+Value::ConstIterator Value::cend() const {
+    if (Type::OBJECT == m_type) {
+        return m_object.cend();
+    } else if (Type::ARRAY == m_type) {
+        return m_array.cend();
+    }
+    return ConstIterator();
 }

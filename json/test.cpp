@@ -49,11 +49,31 @@ int main(void) {
 
     cout << (val != nullptr) << endl;
 
-    val = -32000;
+    val = json::Value::Int(-1);
 
-    cout << int32_t(val.type()) << endl;
-    cout << int32_t(val) << endl;
-    cout << (val == -32000) << endl;
+    cout << json::Value::Int(val.type()) << endl;
+    cout << json::Value::Int(val) << endl;
+    cout << (val == json::Value::Uint(2)) << endl;
+
+    val = nullptr;
+
+    val.append(nullptr)["test"] = json::Value::Uint(5);
+    val.append(json::Value::Uint(6));
+    val.append("dupa");
+    val.append(val);
+
+    cout << val.size() << endl;
+    cout << int32_t(val[0]["test"].size()) << endl;
+
+    for (const auto& data : val) {
+        cout << "Foreach type: " << int(data.type()) << endl;
+    }
+
+    val = nullptr;
+
+    for (const auto& data : val) {
+        cout << "Foreach type: " << int(data.type()) << endl;
+    }
 
     return 0;
 }

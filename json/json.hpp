@@ -44,15 +44,21 @@
 #ifndef _JSON_HPP_
 #define _JSON_HPP_
 
-#include <limits>
 #include <string>
 #include <vector>
 #include <utility>
+#include <iterator>
 
 namespace json {
 
 class Value {
 public:
+    using KeyValue = std::pair<std::string, Value>;
+    using Object = std::vector<KeyValue>;
+    using Array = std::vector<Value>;
+    using Uint = uint64_t;
+    using Int = int64_t;
+
     enum class Type {
         OBJECT,
         ARRAY,
@@ -61,8 +67,6 @@ public:
         BOOLEAN,
         EMPTY
     };
-
-    using KeyValue = std::pair<std::string, Value>;
 
     Value(Type type = Type::EMPTY);
 
@@ -78,13 +82,9 @@ public:
 
     Value(const std::string& key, const Value& value);
 
-    Value(uint32_t value);
+    Value(Uint value);
 
-    Value(uint64_t value);
-
-    Value(int32_t value);
-
-    Value(int64_t value);
+    Value(Int value);
 
     Value(double value);
 
@@ -94,11 +94,13 @@ public:
 
     Value& operator=(const Value& value);
 
-    void push_back(const Value& value);
+    Value& append(const Value& value);
 
     size_t size() const;
 
     void clear();
+
+    bool empty() const;
 
     Value& operator[](const std::string& key);
 
@@ -118,59 +120,187 @@ public:
 
     explicit operator std::nullptr_t() const;
 
-    explicit operator int32_t() const;
+    explicit operator Int() const;
 
-    explicit operator int64_t() const;
-
-    explicit operator uint32_t() const;
-
-    explicit operator uint64_t() const;
+    explicit operator Uint() const;
 
     explicit operator double() const;
 
-    bool operator==(Type type) const { return m_type == type; }
-
     bool operator==(const Value& value) const;
-
-    bool operator==(const std::string& str) const;
-
-    bool operator==(const char* str) const;
-
-    bool operator==(bool boolean) const;
-
-    bool operator==(std::nullptr_t empty) const;
-
-    bool operator==(int32_t value) const;
-
-    bool operator==(int64_t value) const;
-
-    bool operator==(uint32_t value) const;
-
-    bool operator==(uint64_t value) const;
-
-    bool operator==(double value) const;
-
-    bool operator!=(Type type) const { return m_type != type; }
 
     bool operator!=(const Value& value) const {
         return !operator==(value);
     }
 
-    bool operator!=(const std::string& str) const {
-        return !operator==(str);
-    }
+    class BaseIterator {
+    protected:
+         BaseIterator(const Array::iterator& it) :
+            m_type(Value::Type::ARRAY),
+            m_array_iterator(it) { }
 
-    bool operator!=(const char* str) const {
-        return !operator==(str);
-    }
+        BaseIterator(const Array::const_iterator& it) :
+            m_type(Value::Type::ARRAY),
+            m_array_const_iterator(it) { }
 
-    bool operator!=(bool boolean) const {
-        return !operator==(boolean);
-    }
+        BaseIterator(const Object::iterator& it) :
+            m_type(Value::Type::OBJECT),
+            m_object_iterator(it) { }
 
-    bool operator!=(std::nullptr_t empty) const {
-        return !operator==(empty);
-    }
+        BaseIterator(const Object::const_iterator& it) :
+            m_type(Value::Type::OBJECT),
+            m_object_const_iterator(it) { }
+
+        void increment() {
+            if (Value::Type::OBJECT == m_type) {
+                m_object_iterator++;
+            } else {
+                m_array_iterator++;
+            }
+        }
+
+        void decrement() {
+            if (Value::Type::OBJECT == m_type) {
+                m_object_iterator--;
+            } else {
+                m_array_iterator--;
+            }
+        }
+
+        void const_increment() {
+            if (Value::Type::OBJECT == m_type) {
+                m_object_const_iterator++;
+            } else {
+                m_array_const_iterator++;
+            }
+        }
+
+        void const_decrement() {
+            if (Value::Type::OBJECT == m_type) {
+                m_object_const_iterator--;
+            } else {
+                m_array_const_iterator--;
+            }
+        }
+
+        Value& deref() {
+            if (Value::Type::OBJECT == m_type) {
+                return m_object_iterator->second;
+            }
+            return *m_array_iterator;
+        }
+
+        const Value& const_deref() const {
+            if (Value::Type::OBJECT == m_type) {
+                return m_object_const_iterator->second;
+            }
+            return *m_array_const_iterator;
+        }
+
+        bool is_equal(const BaseIterator& it) const {
+            if (it.m_type != m_type) {
+                return false;
+            }
+
+            if (Value::Type::OBJECT == m_type) {
+                return (m_object_iterator == it.m_object_iterator);
+            }
+            return (m_array_iterator == it.m_array_iterator);
+        }
+
+        bool is_const_equal(const BaseIterator& it) const {
+            if (it.m_type != m_type) {
+                return false;
+            }
+
+            if (Value::Type::OBJECT == m_type) {
+                return (m_object_const_iterator == it.m_object_const_iterator);
+            }
+            return (m_array_const_iterator == it.m_array_const_iterator);
+        }
+
+    private:
+        Value::Type m_type;
+
+        union {
+            Array::iterator m_array_iterator;
+            Array::const_iterator m_array_const_iterator;
+            Object::iterator m_object_iterator;
+            Object::const_iterator m_object_const_iterator;
+        };
+    };
+
+    class Iterator : public BaseIterator {
+    public:
+        Iterator() : BaseIterator(Array::iterator{}) { }
+
+        Iterator(const Array::iterator& it) :
+            BaseIterator(it) { }
+
+        Iterator(const Object::iterator& it) :
+            BaseIterator(it) { }
+
+        Iterator& operator++() {
+            increment();
+            return *this;
+        }
+
+        Iterator operator++(int) {
+            Iterator temp(*this);
+            increment();
+            return temp;
+        }
+
+        Value& operator*() { return deref(); }
+
+        Value& operator->() { return deref(); }
+
+        bool operator!=(const Iterator& it) const {
+            return !is_equal(it);
+        }
+    };
+
+    class ConstIterator : public BaseIterator {
+    public:
+        ConstIterator() : BaseIterator(Array::const_iterator{}) { }
+
+        ConstIterator(const Array::const_iterator& it) :
+            BaseIterator(it) { }
+
+        ConstIterator(const Object::const_iterator& it) :
+            BaseIterator(it) { }
+
+        const ConstIterator& operator++() {
+            const_increment();
+            return *this;
+        }
+
+        const ConstIterator operator++(int) {
+            ConstIterator temp(*this);
+            const_increment();
+            return temp;
+        }
+
+        const Value& operator*() const { return const_deref(); }
+
+        const Value& operator->() const { return const_deref(); }
+
+        bool operator!=(const Iterator& it) const {
+            return !is_const_equal(it);
+        }
+    };
+
+    Iterator begin();
+
+    Iterator end();
+
+    ConstIterator begin() const { return std::move(cbegin()); }
+
+    ConstIterator end() const { return std::move(cend()); }
+
+    ConstIterator cbegin() const;
+
+    ConstIterator cend() const;
+
 private:
     class Number {
     public:
@@ -182,35 +312,28 @@ private:
 
         Number() : m_type(Type::INT), m_int(0) { }
 
-        Number(int32_t value) : m_type(Type::INT), m_int(value) { }
+        Number(Int value) : m_type(Type::INT), m_int(value) { }
 
-        Number(int64_t value) : m_type(Type::INT), m_int(value) { }
-
-        Number(uint32_t value) : m_type(Type::UINT), m_uint(value) { }
-
-        Number(uint64_t value) : m_type(Type::UINT), m_uint(value) { }
+        Number(Uint value) : m_type(Type::UINT), m_uint(value) { }
 
         Number(double value) : m_type(Type::DOUBLE), m_double(value) { }
 
-        template<typename T> explicit operator T() const;
+        operator Int() const;
+
+        operator Uint() const;
 
         operator double() const;
 
-        bool operator==(Type type) const { return m_type == type; }
+        bool operator==(const Number& number) const;
 
-        Type type() const { return m_type; }
-    private:
         enum Type m_type;
 
         union {
-            int64_t m_int;
-            uint64_t m_uint;
+            Int m_int;
+            Uint m_uint;
             double m_double;
         };
     };
-
-    using Object = std::vector<KeyValue>;
-    using Array = std::vector<Value>;
 
     union {
         Object m_object;
