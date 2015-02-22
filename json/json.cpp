@@ -120,18 +120,18 @@ Number::operator Double() const {
     return value;
 }
 
-bool Number::operator==(const Number& number) const {
+bool json::operator==(const Number& num1, const Number& num2) {
     bool result = false;
 
-    switch (m_type) {
-    case Type::INT:
-        result = (m_int == Int(number));
+    switch (num1.type()) {
+    case Number::Type::INT:
+        result = (num1.m_int == Int(num2));
         break;
-    case Type::UINT:
-        result = (m_uint == Uint(number));
+    case Number::Type::UINT:
+        result = (num1.m_uint == Uint(num2));
         break;
-    case Type::DOUBLE:
-        result = std::fabs(m_double - Double(number)) <
+    case Number::Type::DOUBLE:
+        result = std::fabs(num1.m_double - Double(num2)) <
             std::numeric_limits<Double>::epsilon();
         break;
     default:
@@ -140,6 +140,10 @@ bool Number::operator==(const Number& number) const {
     }
 
     return result;
+}
+
+bool json::operator!=(const Number& num1, const Number& num2) {
+    return !operator==(num1, num2);
 }
 
 Value::Value(Type type) : m_type(type) {

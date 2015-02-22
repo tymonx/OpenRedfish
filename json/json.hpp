@@ -85,9 +85,18 @@ public:
 
     explicit operator Double() const;
 
-    bool operator==(const Number& number) const;
+    friend bool operator==(const Number& num1, const Number& num2);
+
+    friend bool operator!=(const Number& num1, const Number& num2);
 
     Type type() const { return m_type; }
+
+    bool is_int() const { return Type::INT == m_type; }
+
+    bool is_uint() const { return Type::UINT == m_type; }
+
+    bool is_double() const { return Type::DOUBLE == m_type; }
+
 private:
     enum Type m_type;
 
@@ -194,6 +203,14 @@ public:
     bool is_boolean() const { return Type::BOOLEAN == m_type; }
 
     bool is_null() const { return Type::EMPTY == m_type; }
+
+    bool is_int() const { return is_number() && Number(m_number).is_int(); }
+
+    bool is_uint() const { return is_number() && Number(m_number).is_uint(); }
+
+    bool is_double() const {
+        return is_number() && Number(m_number).is_double();
+    }
 
     explicit operator String&() { return m_string; }
 
