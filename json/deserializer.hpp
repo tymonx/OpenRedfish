@@ -54,12 +54,36 @@ class Deserializer {
 public:
     Deserializer(const char* str);
     Deserializer(const std::string& str);
+
+    Deserializer& operator>>(Value& value);
 private:
-    char* m_pos;
-    char* m_end;
-    Value read_object();
-    String read_string();
-    Value read_value();
+    enum class ObjectState {
+        SEARCHING_OPEN_BRACE,
+        SEARCHING_STRING,
+        SEARCHING_COLON,
+        SEARCHING_VALUE,
+        SEARCHING_COMMA
+    };
+    enum class StringState {
+        SEARCHING_OPEN_QUOTE,
+        SEARCHING_CHARACTER
+    };
+    enum class ArrayState {
+        SEARCHING_OPEN_BRACKET,
+        SEARCHING_COMMA,
+        SEARCHING_VALUE
+    };
+    const char* m_pos;
+    const char* m_end;
+    Array m_array;
+    bool read_object(Value& root);
+    bool read_string(Value& root);
+    bool read_value(Value& root);
+    bool read_array(Value& root);
+    bool read_number(Value& root);
+    bool read_true(Value& root);
+    bool read_false(Value& root);
+    bool read_null(Value& root);
 };
 
 }

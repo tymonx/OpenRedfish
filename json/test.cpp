@@ -39,6 +39,7 @@
 
 #include "json.hpp"
 #include "serializer.hpp"
+#include "deserializer.hpp"
 
 #include <iostream>
 
@@ -120,6 +121,13 @@ int main(void) {
     for (const auto& data : val) {
         cout << "Foreach type: " << int(data.type()) << endl;
     }
+
+    json::Deserializer deserializer(R"({"key":[]})");
+    json::Value val4;
+
+    deserializer >> val4;
+
+    cout << "Deserializer: " << val4 << endl;
 
     return 0;
 }
