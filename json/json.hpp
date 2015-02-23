@@ -55,7 +55,7 @@ class Value;
 
 using String = std::string;
 using Pair = std::pair<String, Value>;
-using Members = std::vector<Pair>;
+using Object = std::vector<Pair>;
 using Array = std::vector<Value>;
 using Bool = bool;
 using Null = std::nullptr_t;
@@ -110,7 +110,7 @@ private:
 class Value {
 public:
     enum class Type {
-        MEMBERS,
+        OBJECT,
         ARRAY,
         STRING,
         NUMBER,
@@ -194,7 +194,7 @@ public:
 
     bool is_string() const { return Type::STRING == m_type; }
 
-    bool is_members() const { return Type::MEMBERS == m_type; }
+    bool is_object() const { return Type::OBJECT == m_type; }
 
     bool is_array() const { return Type::ARRAY == m_type; }
 
@@ -234,7 +234,7 @@ public:
 
     explicit operator const Array&() const { return m_array; }
 
-    explicit operator const Members&() const { return m_members; }
+    explicit operator const Object&() const { return m_object; }
 
     explicit operator const Number&() const { return m_number; }
 
@@ -254,9 +254,9 @@ public:
 
         BaseIterator(const Array::const_iterator& it);
 
-        BaseIterator(const Members::iterator& it);
+        BaseIterator(const Object::iterator& it);
 
-        BaseIterator(const Members::const_iterator& it);
+        BaseIterator(const Object::const_iterator& it);
 
         void increment();
 
@@ -272,15 +272,15 @@ public:
 
         bool is_array() const { return Value::Type::ARRAY == m_type; }
 
-        bool is_members() const { return Value::Type::MEMBERS == m_type; }
+        bool is_object() const { return Value::Type::OBJECT == m_type; }
     private:
         Value::Type m_type;
 
         union {
             Array::iterator m_array_iterator;
             Array::const_iterator m_array_const_iterator;
-            Members::iterator m_members_iterator;
-            Members::const_iterator m_members_const_iterator;
+            Object::iterator m_object_iterator;
+            Object::const_iterator m_object_const_iterator;
         };
     };
 
@@ -292,7 +292,7 @@ public:
 
         Iterator(const Array::iterator& it);
 
-        Iterator(const Members::iterator& it);
+        Iterator(const Object::iterator& it);
 
         Iterator& operator++();
 
@@ -311,7 +311,7 @@ public:
 
         ConstIterator(const Array::const_iterator& it);
 
-        ConstIterator(const Members::const_iterator& it);
+        ConstIterator(const Object::const_iterator& it);
 
         const ConstIterator& operator++();
 
@@ -338,7 +338,7 @@ private:
     enum Type m_type;
 
     union {
-        Members m_members;
+        Object m_object;
         Array m_array;
         String m_string;
         Number m_number;

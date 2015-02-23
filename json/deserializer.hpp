@@ -52,7 +52,16 @@ namespace json {
 
 class Deserializer {
 public:
-
+    Deserializer(const char* str);
+    Deserializer(const std::string& str);
+private:
+    char* m_pos;
+    char* m_end;
+    void read_object();
+    void read_members();
+    void read_pair();
+    void read_pair_string();
+    void read_pair_value();
 };
 
 }

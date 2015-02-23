@@ -164,12 +164,12 @@ Value::Value(const String& str) : m_type(Type::STRING) {
     new (&m_string) String(str);
 }
 
-Value::Value(const Pair& pair) : m_type(Type::MEMBERS) {
-    new (&m_members) Members{pair};
+Value::Value(const Pair& pair) : m_type(Type::OBJECT) {
+    new (&m_object) Object{pair};
 }
 
-Value::Value(const String& key, const Value& value) : m_type(Type::MEMBERS) {
-    new (&m_members) Members{std::make_pair(key, value)};
+Value::Value(const String& key, const Value& value) : m_type(Type::OBJECT) {
+    new (&m_object) Object{std::make_pair(key, value)};
 }
 
 Value::Value(Uint value) : m_type(Type::NUMBER) {
@@ -192,8 +192,8 @@ Value::Value(size_t count, const Value& value) : m_type(Type::ARRAY) {
     new (&m_array) Array(count, value);
 }
 
-Value::Value(std::initializer_list<Pair> init_list) : m_type(Type::MEMBERS) {
-    new (&m_members) Members();
+Value::Value(std::initializer_list<Pair> init_list) : m_type(Type::OBJECT) {
+    new (&m_object) Object();
 
     for (const auto& pair : init_list) {
         (*this)[pair.first] = pair.second;
@@ -207,8 +207,8 @@ Value::Value(std::initializer_list<Value> init_list) : m_type(Type::ARRAY) {
 
 Value::~Value() {
     switch (m_type) {
-    case Type::MEMBERS:
-        m_members.~vector();
+    case Type::OBJECT:
+        m_object.~vector();
         break;
     case Type::ARRAY:
         m_array.~vector();
@@ -229,8 +229,8 @@ Value::~Value() {
 void Value::create_container(Type type) {
     m_type = type;
     switch (type) {
-    case Type::MEMBERS:
-        new (&m_members) Members();
+    case Type::OBJECT:
+        new (&m_object) Object();
         break;
     case Type::ARRAY:
         new (&m_array) Array();
@@ -271,8 +271,8 @@ Value& Value::operator=(const Value& value) {
     }
 
     switch (m_type) {
-    case Type::MEMBERS:
-        m_members = value.m_members;
+    case Type::OBJECT:
+        m_object = value.m_object;
         break;
     case Type::ARRAY:
         m_array = value.m_array;
@@ -305,8 +305,8 @@ Value& Value::operator=(Value&& value) {
     }
 
     switch (m_type) {
-    case Type::MEMBERS:
-        m_members = std::move(value.m_members);
+    case Type::OBJECT:
+        m_object = std::move(value.m_object);
         break;
     case Type::ARRAY:
         m_array = std::move(value.m_array);
@@ -332,7 +332,7 @@ Value& Value::operator=(Value&& value) {
 
 Value& Value::operator=(std::initializer_list<Pair> init_list) {
     this->~Value();
-    create_container(Type::MEMBERS);
+    create_container(Type::OBJECT);
 
     for (const auto& pair : init_list) {
         (*this)[pair.first] = pair.second;
@@ -368,8 +368,8 @@ size_t Value::size() const {
     size_t size = 0;
 
     switch (m_type) {
-    case Type::MEMBERS:
-        size = m_members.size();
+    case Type::OBJECT:
+        size = m_object.size();
         break;
     case Type::ARRAY:
         size = m_array.size();
@@ -398,8 +398,8 @@ bool Value::empty() const {
 
 void Value::clear() {
     switch (m_type) {
-    case Type::MEMBERS:
-        m_members.clear();
+    case Type::OBJECT:
+        m_object.clear();
         break;
     case Type::ARRAY:
         m_array.clear();
@@ -420,11 +420,11 @@ void Value::clear() {
 }
 
 size_t Value::erase(const String& key) {
-    if (!is_members()) { return 0; }
+    if (!is_object()) { return 0; }
 
-    for (auto it = m_members.begin(); it != m_members.end(); it++) {
+    for (auto it = m_object.begin(); it != m_object.end(); it++) {
         if (key == it->first) {
-            m_members.erase(it);
+            m_object.erase(it);
             return 1;
         }
     }
@@ -433,26 +433,26 @@ size_t Value::erase(const String& key) {
 }
 
 Value& Value::Value::operator[](const String& key) {
-    if (!is_members()) {
-        if (is_null()) { *this = std::move(Value(Type::MEMBERS)); }
+    if (!is_object()) {
+        if (is_null()) { *this = std::move(Value(Type::OBJECT)); }
         else { return *this; }
     }
 
-    for (auto& pair : m_members) {
+    for (auto& pair : m_object) {
         if (key == pair.first) {
             return pair.second;
         }
     }
 
-    m_members.emplace_back(key, std::move(Value()));
+    m_object.emplace_back(key, std::move(Value()));
 
-    return m_members.back().second;
+    return m_object.back().second;
 }
 
 const Value& Value::Value::operator[](const String& key) const {
-    if (!is_members()) { return *this; }
+    if (!is_object()) { return *this; }
 
-    for (const auto& pair : m_members) {
+    for (const auto& pair : m_object) {
         if (key == pair.first) {
             return pair.second;
         }
@@ -471,8 +471,8 @@ Value& Value::Value::operator[](size_t index) {
         return m_array[index];
     }
 
-    if  (is_members()) {
-        return m_members[index].second;
+    if  (is_object()) {
+        return m_object[index].second;
     }
 
     return *this;
@@ -483,8 +483,8 @@ const Value& Value::Value::operator[](size_t index) const {
         return m_array[index];
     }
 
-    if (is_members()) {
-        return m_members[index].second;
+    if (is_object()) {
+        return m_object[index].second;
     }
 
     return *this;
@@ -499,9 +499,9 @@ void Value::push_back(const Value& value) {
 }
 
 void Value::push_back(const Pair& pair) {
-    if (is_null()) { *this = std::move(Value(Type::MEMBERS)); }
+    if (is_null()) { *this = std::move(Value(Type::OBJECT)); }
 
-    if (is_members()) {
+    if (is_object()) {
         operator[](pair.first) = pair.second;
         return;
     }
@@ -518,8 +518,8 @@ void Value::pop_back() {
         return;
     }
 
-    if (is_members()) {
-        m_members.pop_back();
+    if (is_object()) {
+        m_object.pop_back();
         return;
     }
 
@@ -540,8 +540,8 @@ bool json::operator==(const Value& val1, const Value& val2) {
     bool result = false;
 
     switch (val1.m_type) {
-    case Value::Type::MEMBERS:
-        result = (val1.m_members == val2.m_members);
+    case Value::Type::OBJECT:
+        result = (val1.m_object == val2.m_object);
         break;
     case Value::Type::ARRAY:
         result = (val1.m_array == val2.m_array);
@@ -571,8 +571,8 @@ bool json::operator!=(const Value& val1, const Value& val2) {
 }
 
 Value::Iterator Value::begin() {
-    if (is_members()) {
-        return m_members.begin();
+    if (is_object()) {
+        return m_object.begin();
     }
 
     if (is_array()) {
@@ -583,8 +583,8 @@ Value::Iterator Value::begin() {
 }
 
 Value::Iterator Value::end() {
-    if (is_members()) {
-        return m_members.end();
+    if (is_object()) {
+        return m_object.end();
     }
 
     if (is_array()) {
@@ -603,8 +603,8 @@ Value::ConstIterator Value::end() const {
 }
 
 Value::ConstIterator Value::cbegin() const {
-    if (is_members()) {
-        return m_members.cbegin();
+    if (is_object()) {
+        return m_object.cbegin();
     }
 
     if (is_array()) {
@@ -615,8 +615,8 @@ Value::ConstIterator Value::cbegin() const {
 }
 
 Value::ConstIterator Value::cend() const {
-    if (is_members()) {
-        return m_members.cend();
+    if (is_object()) {
+        return m_object.cend();
     }
 
     if (is_array()) {
@@ -634,13 +634,13 @@ Value::BaseIterator::BaseIterator(const Array::const_iterator& it) :
     m_type(Value::Type::ARRAY),
     m_array_const_iterator(it) { }
 
-Value::BaseIterator::BaseIterator(const Members::iterator& it) :
-    m_type(Value::Type::MEMBERS),
-    m_members_iterator(it) { }
+Value::BaseIterator::BaseIterator(const Object::iterator& it) :
+    m_type(Value::Type::OBJECT),
+    m_object_iterator(it) { }
 
-Value::BaseIterator::BaseIterator(const Members::const_iterator& it) :
-    m_type(Value::Type::MEMBERS),
-    m_members_const_iterator(it) { }
+Value::BaseIterator::BaseIterator(const Object::const_iterator& it) :
+    m_type(Value::Type::OBJECT),
+    m_object_const_iterator(it) { }
 
 bool json::operator==(const Value::BaseIterator& it1,
         const Value::BaseIterator& it2) {
@@ -648,8 +648,8 @@ bool json::operator==(const Value::BaseIterator& it1,
         return false;
     }
 
-    if (it1.is_members()) {
-        return (it1.m_members_iterator == it2.m_members_iterator);
+    if (it1.is_object()) {
+        return (it1.m_object_iterator == it2.m_object_iterator);
     }
 
     if (it1.is_array()) {
@@ -663,47 +663,47 @@ bool json::operator!=(const Value::BaseIterator& it1,
         const Value::BaseIterator& it2) { return !(it1 == it2); }
 
 void Value::BaseIterator::increment() {
-    if (is_members()) {
-        m_members_iterator++;
+    if (is_object()) {
+        m_object_iterator++;
     } else {
         m_array_iterator++;
     }
 }
 
 void Value::BaseIterator::decrement() {
-    if (is_members()) {
-        m_members_iterator--;
+    if (is_object()) {
+        m_object_iterator--;
     } else {
         m_array_iterator--;
     }
 }
 
 void Value::BaseIterator::const_increment() {
-    if (is_members()) {
-        m_members_const_iterator++;
+    if (is_object()) {
+        m_object_const_iterator++;
     } else {
         m_array_const_iterator++;
     }
 }
 
 void Value::BaseIterator::const_decrement() {
-    if (is_members()) {
-        m_members_const_iterator--;
+    if (is_object()) {
+        m_object_const_iterator--;
     } else {
         m_array_const_iterator--;
     }
 }
 
 Value& Value::BaseIterator::deref() {
-    if (is_members()) {
-        return m_members_iterator->second;
+    if (is_object()) {
+        return m_object_iterator->second;
     }
     return *m_array_iterator;
 }
 
 const Value& Value::BaseIterator::const_deref() const {
-    if (is_members()) {
-        return m_members_const_iterator->second;
+    if (is_object()) {
+        return m_object_const_iterator->second;
     }
     return *m_array_const_iterator;
 }
@@ -712,7 +712,7 @@ Value::Iterator::Iterator() : BaseIterator(Array::iterator{}) { }
 
 Value::Iterator::Iterator(const Array::iterator& it) : BaseIterator(it) { }
 
-Value::Iterator::Iterator(const Members::iterator& it) : BaseIterator(it) { }
+Value::Iterator::Iterator(const Object::iterator& it) : BaseIterator(it) { }
 
 Value::Iterator& Value::Iterator::operator++() {
     increment();
@@ -730,7 +730,7 @@ Value::ConstIterator::ConstIterator() : BaseIterator(Array::iterator{}) { }
 Value::ConstIterator::ConstIterator(const Array::const_iterator& it) :
     BaseIterator(it) { }
 
-Value::ConstIterator::ConstIterator(const Members::const_iterator& it) :
+Value::ConstIterator::ConstIterator(const Object::const_iterator& it) :
     BaseIterator(it) { }
 
 const Value::ConstIterator& Value::ConstIterator::operator++() {

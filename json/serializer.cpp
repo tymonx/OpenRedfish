@@ -52,18 +52,18 @@ Serializer::Serializer(const Value& value) : m_serialized() {
 }
 
 Serializer& Serializer::operator<<(const Value& value) {
-    if (value.is_members() || value.is_null()) {
-        write_members(value);
+    if (value.is_object() || value.is_null()) {
+        write_object(value);
     }
 
     return *this;
 }
 
-void Serializer::write_members(const Value& value) {
+void Serializer::write_object(const Value& value) {
     m_serialized += '{';
 
     if (value.size() > 0) {
-        for (const auto& pair : Members(value)) {
+        for (const auto& pair : Object(value)) {
             write_string(pair.first);
             m_serialized += ":";
             write_value(pair.second);
@@ -78,8 +78,8 @@ void Serializer::write_members(const Value& value) {
 
 void Serializer::write_value(const Value& value) {
     switch (value.type()) {
-    case Value::Type::MEMBERS:
-        write_members(value);
+    case Value::Type::OBJECT:
+        write_object(value);
         break;
     case Value::Type::ARRAY:
         write_array(value);
