@@ -57,11 +57,9 @@ public:
 private:
     char* m_pos;
     char* m_end;
-    void read_object();
-    void read_members();
-    void read_pair();
-    void read_pair_string();
-    void read_pair_value();
+    Value read_object();
+    String read_string();
+    Value read_value();
 };
 
 }

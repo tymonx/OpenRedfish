@@ -42,3 +42,45 @@
  * */
 
 #include "deserializer.hpp"
+
+using namespace json;
+
+Value Deserializer::read_object() {
+    Value value;
+    std::string token;
+    std::string key;
+
+    bool start = false;
+
+    while (m_pos < m_end) {
+        switch (*m_pos) {
+        case '{':
+            start = true;
+            break;
+        case '}':
+            return value;
+        case ',':
+            if (!start) return value;
+            value[key] = read_value();
+            token.clear();
+            break;
+        case ':':
+            if (!start) return value;
+            key = read_string();
+            token.clear();
+            break;
+        case '\r':
+        case '\n':
+        case '\t':
+        case ' ':
+            break;
+        default:
+            if (!start) return value;
+            token += *m_pos;
+            break;
+        }
+        m_pos++;
+    }
+
+    return value;
+}
