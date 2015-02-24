@@ -140,8 +140,11 @@ int main(void) {
     )");
 
     if (deserializer.is_invalid()) {
-        cout << "Error in line: " << deserializer.get_line()
-             << " at position: " << deserializer.get_column() << std::endl;
+        auto error = deserializer.get_error();
+        cout << "Error in line: " << error.line
+             << " at position: " << error.column
+             << " offset: " << error.offset
+             << " size: " << error.size << std::endl;
     }
 
     while (!deserializer.empty()) {

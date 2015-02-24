@@ -107,6 +107,17 @@ void Deserializer::parsing() {
     }
 }
 
+Deserializer::Error Deserializer::get_error() const {
+    Error error;
+
+    error.line = m_file_line;
+    error.column = m_file_column;
+    error.offset = size_t(m_pos - m_begin);
+    error.size = size_t(m_end - m_begin);
+
+    return error;
+}
+
 bool Deserializer::read_object(Value& value) {
     Value key;
 
