@@ -94,9 +94,11 @@ void Serializer::write_object(const Value& value) {
 
         ++m_level;
 
+        size_t indent_length = m_indent * m_level;
+
         for (const auto& pair : Object(value)) {
             append(NEWLINE, m_enable_newline);
-            append(m_indent * m_level, ' ');
+            append(indent_length, ' ');
             write_string(pair.first);
             append(" : ", m_colon_start, m_colon_stop);
             write_value(pair.second);
@@ -146,9 +148,11 @@ void Serializer::write_array(const Value& value) {
 
         ++m_level;
 
+        size_t indent_length = m_indent * m_level;
+
         for (const auto& val : value) {
             append(NEWLINE, m_enable_newline);
-            append(m_indent * m_level, ' ');
+            append(indent_length, ' ');
             write_value(val);
             push_back(',');
         }
