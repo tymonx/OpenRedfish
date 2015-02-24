@@ -45,9 +45,9 @@
 
 using namespace json;
 
-Serializer::Serializer() : m_serialized() { }
+Serializer::Serializer() : String() { }
 
-Serializer::Serializer(const Value& value) : m_serialized() {
+Serializer::Serializer(const Value& value) : String() {
     operator<<(value);
 }
 
@@ -60,20 +60,20 @@ Serializer& Serializer::operator<<(const Value& value) {
 }
 
 void Serializer::write_object(const Value& value) {
-    m_serialized += '{';
+    append("{");
 
     if (value.size() > 0) {
         for (const auto& pair : Object(value)) {
             write_string(pair.first);
-            m_serialized += ":";
+            append(":");
             write_value(pair.second);
-            m_serialized += ",";
+            append(",");
         };
 
-        m_serialized.pop_back();
+        pop_back();
     }
 
-    m_serialized += '}';
+    append("}");
 }
 
 void Serializer::write_value(const Value& value) {
@@ -102,34 +102,34 @@ void Serializer::write_value(const Value& value) {
 }
 
 void Serializer::write_array(const Value& value) {
-    m_serialized += '[';
+    append("[");
 
     if (value.size() > 0) {
         for (const auto& val : value) {
             write_value(val);
-            m_serialized += ",";
+            append(",");
         }
 
-        m_serialized.pop_back();
+        pop_back();
     }
 
-    m_serialized += ']';
+    append("]");
 }
 
 void Serializer::write_string(const Value& value) {
-    m_serialized += "\"" + String(value) + "\"";
+    append("\"" + String(value) + "\"");
 }
 
 void Serializer::write_number(const Value& value) {
     switch (Number(value).type()) {
     case Number::Type::INT:
-        m_serialized += std::to_string(Int(value));
+        append(std::to_string(Int(value)));
         break;
     case Number::Type::UINT:
-        m_serialized += std::to_string(Uint(value));
+        append(std::to_string(Uint(value)));
         break;
     case Number::Type::DOUBLE:
-        m_serialized += std::to_string(Double(value));
+        append(std::to_string(Double(value)));
         break;
     default:
         break;
@@ -137,9 +137,9 @@ void Serializer::write_number(const Value& value) {
 }
 
 void Serializer::write_boolean(const Value& value) {
-    m_serialized += (true == Bool(value)) ? "true" : "false";
+    append((true == Bool(value)) ? "true" : "false");
 }
 
 void Serializer::write_empty(const Value&) {
-    m_serialized += "null";
+    append("null");
 }

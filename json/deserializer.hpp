@@ -50,40 +50,37 @@
 
 namespace json {
 
-class Deserializer {
+class Deserializer : public Array {
 public:
+    Deserializer();
     Deserializer(const char* str);
     Deserializer(const std::string& str);
 
+    Deserializer& operator<<(const std::string& str);
     Deserializer& operator>>(Value& value);
 private:
-    enum class ObjectState {
-        SEARCHING_OPEN_BRACE,
-        SEARCHING_STRING,
-        SEARCHING_COLON,
-        SEARCHING_VALUE,
-        SEARCHING_COMMA
-    };
-    enum class StringState {
-        SEARCHING_OPEN_QUOTE,
-        SEARCHING_CHARACTER
-    };
-    enum class ArrayState {
-        SEARCHING_OPEN_BRACKET,
-        SEARCHING_COMMA,
-        SEARCHING_VALUE
-    };
     const char* m_pos;
     const char* m_end;
-    Array m_array;
-    bool read_object(Value& root);
-    bool read_string(Value& root);
-    bool read_value(Value& root);
-    bool read_array(Value& root);
-    bool read_number(Value& root);
-    bool read_true(Value& root);
-    bool read_false(Value& root);
-    bool read_null(Value& root);
+    bool read_object(Value& value);
+    bool read_string(Value& value);
+    bool read_value(Value& value);
+    bool read_array(Value& value);
+    bool read_curly_open();
+    bool read_curly_close();
+    bool read_square_open();
+    bool read_square_close();
+    bool read_comma();
+    bool read_colon();
+    bool read_quote();
+    bool read_true(Value& value);
+    bool read_false(Value& value);
+    bool read_null(Value& value);
+    bool read_number(Value& value);
+    bool read_number_digit(std::string& str);
+    bool read_number_integer(std::string& str);
+    bool read_number_fractional(std::string& str);
+    bool read_number_exponent(std::string& str);
+    bool read_whitespaces();
 };
 
 }

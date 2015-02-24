@@ -204,12 +204,16 @@ public:
 
     bool is_null() const { return Type::EMPTY == m_type; }
 
-    bool is_int() const { return is_number() && Number(m_number).is_int(); }
+    bool is_int() const {
+        return is_number() ? Number(m_number).is_int() : false;
+    }
 
-    bool is_uint() const { return is_number() && Number(m_number).is_uint(); }
+    bool is_uint() const {
+        return is_number() ? Number(m_number).is_uint() : false;
+    }
 
     bool is_double() const {
-        return is_number() && Number(m_number).is_double();
+        return is_number() ? Number(m_number).is_double() : false;
     }
 
     explicit operator String&() { return m_string; }

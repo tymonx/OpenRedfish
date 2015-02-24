@@ -122,12 +122,26 @@ int main(void) {
         cout << "Foreach type: " << int(data.type()) << endl;
     }
 
-    json::Deserializer deserializer(R"({"key":[]})");
+    json::Deserializer deserializer(R"({"key1":true, "key3": 
+        
+        false  , "key5": [ {"a": 4}, [], 5,
+               
+               [2, true, 6], true, false  ], "key7":0.3e+4 })");
     json::Value val4;
+    json::Value val5;
+    json::Value val6;
 
     deserializer >> val4;
 
+    json::Deserializer(R"({
+        "ad": 
+5       
+
+    }{"a": 7})") >> val5 >> val6;
+
     cout << "Deserializer: " << val4 << endl;
+    cout << "Deserializer: " << val5 << endl;
+    cout << "Deserializer: " << val6 << endl;
 
     return 0;
 }

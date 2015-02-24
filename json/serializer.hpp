@@ -50,22 +50,14 @@
 
 namespace json {
 
-class Serializer {
+class Serializer : public String {
 public:
     Serializer();
 
     Serializer(const Value& value);
 
     Serializer& operator<<(const Value& value);
-
-    const char* c_str() const { return m_serialized.c_str(); }
-    const std::string& str() const { return m_serialized; }
-
-    explicit operator const char*() { return m_serialized.c_str(); }
-    explicit operator const std::string&() { return m_serialized; }
 private:
-    std::string m_serialized;
-
     void write_object(const Value& value);
     void write_value(const Value& value);
     void write_array(const Value& value);
@@ -76,8 +68,8 @@ private:
 };
 
 inline std::ostream& operator<<(std::ostream& os,
-        const Serializer& serializer) {
-    return os << serializer.str();
+        const Value& value) {
+    return os << Serializer(value);
 }
 
 }
