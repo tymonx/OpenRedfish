@@ -73,10 +73,6 @@ int main(void) {
     cout << val.size() << endl;
     cout << int32_t(val[0]["test"].size()) << endl;
 
-    for (const auto& data : val) {
-        cout << "Foreach type: " << int(data.type()) << endl;
-    }
-
     val = nullptr;
     val["key1"] = 4;
     val["key2"];
@@ -110,30 +106,24 @@ int main(void) {
         Pair{"key3", {2, true, nullptr}}
     };
 
-    cout << "Size: " << sizeof(json::Value) << endl;
     cout << "Serializer: " << json::Serializer(val) << endl;
     cout << "Serializer: " << json::Serializer(val2) << endl;
     val.swap(val2);
     cout << "Serializer: " << json::Serializer(val) << endl;
     cout << "Serializer: " << json::Serializer(val2) << endl;
-    cout << "Serializer: " << json::Serializer(val3) << endl;
+    cout << "Serializer: " << json::Serializer(val3, json::Serializer::Mode::PRETTY) << endl;
 
-    for (const auto& data : val) {
-        cout << "Foreach type: " << int(data.type()) << endl;
-    }
-
-    json::Deserializer deserializer1(R"({"key1":true, "key3": 
-        
-        false  , "ke5": [ {"a": 4}, [], 5,
-               
-               [2, true, 6], true, false  ], "key7":0.3e+4 })");
     json::Value val4;
     json::Value val5;
     json::Value val6;
 
-    deserializer1 >> val4;
+    json::Deserializer deserializer(R"({"key1":true, "key3": 
+        
+        false  , "ke5": [ {"a": 4}, [], 5,
+               
+               [2, true, 6], true, false  ], "key7":0.3e+4 })");
 
-    json::Deserializer deserializer(R"({"ad":true}   
+    deserializer << (R"({"ad":true}   
          
     {"face1": "\uD83D\uDE02"}
     {"face2":"😂" }
@@ -237,9 +227,10 @@ int main(void) {
         cout << "Error: " << error.decode() << std::endl;
     }
 
+    cout << "Deserializer: ";
     while (!deserializer.empty()) {
         deserializer >> val4;
-        cout << "Deserializer: " << json::Serializer(val4, json::Serializer::Mode::PRETTY) << endl;
+        cout << json::Serializer(val4, json::Serializer::Mode::PRETTY) << endl;
     }
 
     return 0;
