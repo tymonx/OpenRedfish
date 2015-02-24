@@ -31,6 +31,10 @@ set(SOURCES
     test.cpp
 )
 
-add_library(json-lib STATIC json.cpp serializer.cpp deserializer.cpp)
+add_library(json-lib STATIC
+    json.cpp
+    serializer.cpp
+    deserializer.cpp
+)
 add_executable(json ${SOURCES})
 target_link_libraries(json json-lib)

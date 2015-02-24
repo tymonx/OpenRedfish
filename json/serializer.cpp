@@ -48,14 +48,20 @@ using namespace json;
 static constexpr char JSON_NULL[] = "null";
 static constexpr char JSON_TRUE[] = "true";
 static constexpr char JSON_FALSE[] = "false";
+static constexpr char NEWLINE[] = "\n";
 
-Serializer::Serializer() : String() { }
+Serializer::Serializer(Mode mode) {
+    set_mode(mode);
+}
 
-Serializer::Serializer(const Value& value) {
+Serializer::Serializer(const Value& value, Mode mode) {
+    set_mode(mode);
     operator<<(value);
 }
 
 Serializer& Serializer::operator<<(const Value& value) {
+    m_level = 0;
+
     if (value.is_object() || value.is_null()) {
         write_object(value);
     }
@@ -63,21 +69,50 @@ Serializer& Serializer::operator<<(const Value& value) {
     return *this;
 }
 
-void Serializer::write_object(const Value& value) {
-    push_back('{');
+void Serializer::set_mode(Mode mode) {
+    switch (mode) {
+    case Mode::COMPACT:
+        m_enable_newline = false;
+        m_indent = 0;
+        m_colon_start = 1;
+        m_colon_stop = 1;
+        break;
+    case Mode::PRETTY:
+        m_enable_newline = true;
+        m_indent = DEFAULT_INDENT;
+        m_colon_start = 0;
+        m_colon_stop = 3;
+        break;
+    default:
+        break;
+    }
+}
 
+void Serializer::write_object(const Value& value) {
     if (value.size() > 0) {
+        push_back('{');
+
+        ++m_level;
+
         for (const auto& pair : Object(value)) {
+            append(NEWLINE, m_enable_newline);
+            append(m_indent * m_level, ' ');
             write_string(pair.first);
-            push_back(':');
+            append(" : ", m_colon_start, m_colon_stop);
             write_value(pair.second);
             push_back(',');
         };
 
         pop_back();
-    }
+        append(NEWLINE, m_enable_newline);
 
-    push_back('}');
+        --m_level;
+
+        append(m_indent * m_level, ' ');
+        push_back('}');
+    } else {
+        append("{}");
+    }
 }
 
 void Serializer::write_value(const Value& value) {
@@ -106,18 +141,28 @@ void Serializer::write_value(const Value& value) {
 }
 
 void Serializer::write_array(const Value& value) {
-    push_back('[');
-
     if (value.size() > 0) {
+        push_back('[');
+
+        ++m_level;
+
         for (const auto& val : value) {
+            append(NEWLINE, m_enable_newline);
+            append(m_indent * m_level, ' ');
             write_value(val);
             push_back(',');
         }
 
         pop_back();
-    }
+        append(NEWLINE, m_enable_newline);
 
-    push_back(']');
+        --m_level;
+
+        append(m_indent * m_level, ' ');
+        push_back(']');
+    } else {
+        append("[]");
+    }
 }
 
 void Serializer::write_string(const Value& value) {

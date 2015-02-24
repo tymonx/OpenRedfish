@@ -50,12 +50,30 @@ namespace json {
 
 class Serializer : public String {
 public:
-    Serializer();
+    enum class Mode {
+        COMPACT,
+        PRETTY
+    };
 
-    Serializer(const Value& value);
+    static constexpr size_t DEFAULT_INDENT = 4;
+    static constexpr Mode DEFAULT_MODE = Mode::COMPACT;
+
+    Serializer(Mode mode = DEFAULT_MODE);
+
+    Serializer(const Value& value, Mode mode = DEFAULT_MODE);
 
     Serializer& operator<<(const Value& value);
+
+    void set_mode(Mode mode);
+    void enable_newline(bool enable = true) { m_enable_newline = enable; }
+    void set_indent(size_t indent = DEFAULT_INDENT) { m_indent = indent; }
 private:
+    size_t m_level = 0;
+    size_t m_indent = DEFAULT_INDENT;
+    bool m_enable_newline = false;
+    size_t m_colon_start = 1;
+    size_t m_colon_stop = 1;
+
     void write_object(const Value& value);
     void write_value(const Value& value);
     void write_array(const Value& value);
@@ -66,8 +84,8 @@ private:
 };
 
 inline std::ostream& operator<<(std::ostream& os,
-        const Value& value) {
-    return os << Serializer(value);
+        const Serializer& serializer) {
+    return os << serializer.c_str();
 }
 
 }
