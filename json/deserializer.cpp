@@ -47,6 +47,7 @@
 #include <cstring>
 
 using namespace json;
+using Code = Deserializer::Error::Code;
 using Surrogate = std::pair<unsigned, unsigned>;
 
 static constexpr char JSON_NULL[] = "null";
@@ -58,6 +59,9 @@ static constexpr Surrogate SURROGATE_MAX(0xDBFF, 0xDFFF);
 
 template<size_t N>
 constexpr size_t length(const char (&)[N]) { return (N - 1); }
+
+template<class T, size_t N>
+constexpr size_t array_size(T (&)[N]) { return N; }
 
 Deserializer::Deserializer() { }
 
@@ -78,6 +82,8 @@ Deserializer::Deserializer(const String& str) :
 }
 
 Deserializer& Deserializer::operator<<(const String& str) {
+    clear_error();
+
     m_begin = str.data();
     m_pos = m_begin;
     m_end = m_begin + str.size();
@@ -117,6 +123,7 @@ void Deserializer::parsing() {
 Deserializer::Error Deserializer::get_error() const {
     Error error;
 
+    error.code = m_error_code;
     error.line = 1;
     error.column = 1;
     error.offset = size_t(m_pos - m_begin);
@@ -143,12 +150,13 @@ bool Deserializer::read_object(Value& value) {
     if (!read_curly_open()) { return false; }
     value = Value::Type::OBJECT;
     if (read_curly_close()) { return true; }
+    clear_error();
 
     do {
         if (!read_string(key)) { return false; }
         if (!read_colon()) { return false; }
         if (!read_value(value[String(key)])) { return false; }
-        if (!read_comma()) { return read_curly_close(); }
+        if (!read_comma()) { clear_error(); return read_curly_close(); }
     } while (true);
 }
 
@@ -171,6 +179,7 @@ bool Deserializer::read_string(Value& value) {
         }
     }
 
+    set_error(Code::END_OF_FILE);
     return false;
 }
 
@@ -209,6 +218,7 @@ bool Deserializer::read_string_escape(String& str) {
         ok = read_string_escape_code(str);
         break;
     default:
+        set_error(Code::INVALID_ESCAPE);
         ok = false;
         break;
     }
@@ -255,14 +265,20 @@ bool Deserializer::read_string_escape_code(String& str) {
 }
 
 bool Deserializer::read_unicode(uint32_t& code) {
-    if (is_outbound(ESCAPE_HEX_DIGITS_SIZE)) { return false; }
+    if (is_outbound(ESCAPE_HEX_DIGITS_SIZE)) {
+        set_error(Code::END_OF_FILE);
+        return false;
+    }
 
     const char* ch = get_position();
     if ('\\' != ch[0]) { return false; }
     if ('u'  != ch[1]) { return false; }
 
     for (size_t i = 2; i < ESCAPE_HEX_DIGITS_SIZE; i++) {
-        if (!std::isxdigit(ch[i])) { return false; }
+        if (!std::isxdigit(ch[i])) {
+            set_error(Code::INVALID_UNICODE);
+            return false;
+        }
     }
 
     size_t unused;
@@ -303,7 +319,7 @@ bool Deserializer::read_value(Value& value) {
     default:
         if (std::isdigit(get_char())) {
             ok = read_number(value);
-        }
+        } else { set_error(Code::MISS_VALUE); }
         break;
     }
 
@@ -316,59 +332,84 @@ bool Deserializer::read_array(Value& value) {
     if (!read_square_open()) { return false; }
     value = Value::Type::ARRAY;
     if (read_square_close()) { return true; }
+    clear_error();
 
     do {
         if (!read_value(array_value)) { return false; }
         value.push_back(std::move(array_value));
-        if (!read_comma()) { return read_square_close(); }
+        if (!read_comma()) {
+            clear_error();
+            return read_square_close();
+        }
     } while (true);
 }
 
 bool Deserializer::read_colon() {
     if (!read_whitespaces()) { return false; }
-    if (':' != get_char()) { return false; }
+    if (':' != get_char()) {
+        set_error(Code::MISS_COLON);
+        return false;
+    }
     next_char();
     return true;
 }
 
 bool Deserializer::read_quote() {
     if (!read_whitespaces()) { return false; }
-    if ('"' != get_char()) { return false; }
+    if ('"' != get_char()) {
+        set_error(Code::MISS_QUOTE);
+        return false;
+    }
     next_char();
     return true;
 }
 
 bool Deserializer::read_curly_open() {
     if (!read_whitespaces()) { return false; }
-    if ('{' != get_char()) { return false; }
+    if ('{' != get_char()) {
+        set_error(Code::MISS_CURLY_OPEN);
+        return false;
+    }
     next_char();
     return true;
 }
 
 bool Deserializer::read_curly_close() {
     if (!read_whitespaces()) { return false; }
-    if ('}' != get_char()) { return false; }
+    if ('}' != get_char()) {
+        set_error(Code::MISS_CURLY_CLOSE);
+        return false;
+    }
     next_char();
     return true;
 }
 
 bool Deserializer::read_square_open() {
     if (!read_whitespaces()) { return false; }
-    if ('[' != get_char()) { return false; }
+    if ('[' != get_char()) {
+        set_error(Code::MISS_SQUARE_OPEN);
+        return false;
+    }
     next_char();
     return true;
 }
 
 bool Deserializer::read_square_close() {
     if (!read_whitespaces()) { return false; }
-    if (']' != get_char()) { return false; }
+    if (']' != get_char()) {
+        set_error(Code::MISS_SQUARE_CLOSE);
+        return false;
+    }
     next_char();
     return true;
 }
 
 bool Deserializer::read_comma() {
     if (!read_whitespaces()) { return false; }
-    if (',' != get_char()) { return false; }
+    if (',' != get_char()) {
+        set_error(Code::MISS_COMMA);
+        return false;
+    }
     next_char();
     return true;
 }
@@ -387,6 +428,7 @@ bool Deserializer::read_whitespaces() {
         }
     }
 
+    set_error(Code::END_OF_FILE);
     return false;
 }
 
@@ -405,12 +447,12 @@ bool Deserializer::read_number_digit(String& str) {
 }
 
 bool Deserializer::read_number_integer(String& str) {
-    if (is_end()) { return false; }
+    if (is_end()) { set_error(Code::END_OF_FILE); return false; }
 
     if ('-' == get_char()) {
         str.push_back(get_char());
         next_char();
-        if (is_end()) { return false; }
+        if (is_end()) { set_error(Code::END_OF_FILE); return false; }
     }
 
     if ('0' == get_char()) {
@@ -423,7 +465,7 @@ bool Deserializer::read_number_integer(String& str) {
 }
 
 bool Deserializer::read_number_fractional(String& str) {
-    if (is_end()) { return false; }
+    if (is_end()) { set_error(Code::END_OF_FILE); return false; }
 
     bool ok = true;
 
@@ -437,12 +479,12 @@ bool Deserializer::read_number_fractional(String& str) {
 }
 
 bool Deserializer::read_number_exponent(String& str) {
-    if (is_end()) { return false; }
+    if (is_end()) { set_error(Code::END_OF_FILE); return false; }
 
     if (('e' != get_char()) && ('E' != get_char())) { return true; }
 
     next_char();
-    if (is_end()) { return false; }
+    if (is_end()) { set_error(Code::END_OF_FILE); return false; }
 
     if (('+' == get_char()) || ('-' == get_char())) {
         str.push_back(get_char());
@@ -463,9 +505,18 @@ bool Deserializer::read_number(Value& value) {
     String str_exponent;
 
     read_whitespaces();
-    if (!read_number_integer(str_integer)) { return false; }
-    if (!read_number_fractional(str_fractional)) { return false; }
-    if (!read_number_exponent(str_exponent)) { return false; }
+    if (!read_number_integer(str_integer)) {
+        set_error(Code::INVALID_NUMBER_INTEGER);
+        return false;
+    }
+    if (!read_number_fractional(str_fractional)) {
+        set_error(Code::INVALID_NUMBER_FRACTION);
+        return false;
+    }
+    if (!read_number_exponent(str_exponent)) {
+        set_error(Code::INVALID_NUMBER_EXPONENT);
+        return false;
+    }
 
     long int integer = stol(str_integer);
     double fractional = str_fractional.empty() ? 0.0 : stod(str_fractional);
@@ -488,9 +539,13 @@ bool Deserializer::read_number(Value& value) {
 }
 
 bool Deserializer::read_true(Value& value) {
-    if (is_outbound(length(JSON_TRUE))) { return false; }
+    if (is_outbound(length(JSON_TRUE))) {
+        set_error(Code::END_OF_FILE);
+        return false;
+    }
 
     if (0 != std::strncmp(get_position(), JSON_TRUE, length(JSON_TRUE))) {
+        set_error(Code::NOT_MATCH_TRUE);
         return false;
     }
 
@@ -501,9 +556,13 @@ bool Deserializer::read_true(Value& value) {
 }
 
 bool Deserializer::read_false(Value& value) {
-    if (is_outbound(length(JSON_FALSE))) { return false; }
+    if (is_outbound(length(JSON_FALSE))) {
+        set_error(Code::END_OF_FILE);
+        return false;
+    }
 
     if (0 != std::strncmp(get_position(), JSON_FALSE, length(JSON_FALSE))) {
+        set_error(Code::NOT_MATCH_FALSE);
         return false;
     }
 
@@ -514,9 +573,13 @@ bool Deserializer::read_false(Value& value) {
 }
 
 bool Deserializer::read_null(Value& value) {
-    if (is_outbound(length(JSON_NULL))) { return false; }
+    if (is_outbound(length(JSON_NULL))) {
+        set_error(Code::END_OF_FILE);
+        return false;
+    }
 
     if (0 != std::strncmp(get_position(), JSON_NULL, length(JSON_NULL))) {
+        set_error(Code::NOT_MATCH_NULL);
         return false;
     }
 
@@ -524,4 +587,45 @@ bool Deserializer::read_null(Value& value) {
 
     skip_chars(length(JSON_NULL));
     return true;
+}
+
+void Deserializer::set_error(Error::Code error_code) {
+    if (Error::Code::NONE == m_error_code) {
+        m_error_code = error_code;
+    }
+}
+
+struct ErrorCodes {
+    Deserializer::Error::Code code;
+    const char* message;
+};
+
+static const struct ErrorCodes g_error_codes[] = {
+    { Code::NONE,               "No error"},
+    { Code::END_OF_FILE,        "End of file reached"},
+    { Code::MISS_QUOTE,         "Missing quote '\"' for string"},
+    { Code::MISS_COMMA,         "Missing comma ',' in array/members"},
+    { Code::MISS_COLON,         "Missing colon ':' in member pair"},
+    { Code::MISS_CURLY_OPEN,    "Missing curly '{' for object"},
+    { Code::MISS_CURLY_CLOSE,   "Missing curly '}' for object"},
+    { Code::MISS_SQUARE_OPEN,   "Missing curly '[' for array"},
+    { Code::MISS_SQUARE_CLOSE,  "Missing curly ']' for array"},
+    { Code::NOT_MATCH_NULL,     "Did you mean 'null'?"},
+    { Code::NOT_MATCH_TRUE,     "Did you mean 'true'?"},
+    { Code::NOT_MATCH_FALSE,    "Did you mean 'false'?"},
+    { Code::MISS_VALUE,         "Missing value in array/member"},
+    { Code::INVALID_ESCAPE,     "Invalid escape character"},
+    { Code::INVALID_UNICODE,    "Invalid unicode"},
+    { Code::INVALID_NUMBER_INTEGER, "Invalid number integer part"},
+    { Code::INVALID_NUMBER_FRACTION,"Invalid number fractional part"},
+    { Code::INVALID_NUMBER_EXPONENT,"Invalid number exponent part"}
+};
+
+const char* Deserializer::Error::decode() {
+    for (const auto& error : g_error_codes) {
+        if (error.code == code) {
+            return error.message;
+        }
+    }
+    return "Unknown error";
 }

@@ -144,7 +144,7 @@ int main(void) {
     {
         "aa":2,
         "key1":5,
-        "key2": [1, 3, 5],
+        "key2": [3, 3, 5],
         "key3":-7,
         "key4":{
             "subtest1":5,
@@ -155,7 +155,8 @@ int main(void) {
             "inkey5":"Test2"
         },
         "key6":[ 3, 2, 1, 0],
-        "key7":{"a":2,"b":4},
+        "key7":{"a":2,"b":4,"a":3e9},
+        "key7":3,
         "key8":[
             true,
             true,
@@ -164,6 +165,7 @@ int main(void) {
             true
         ]
     }
+    {} {  }
 )";
 
     if (deserializer.is_invalid()) {
@@ -171,6 +173,7 @@ int main(void) {
         cout << "Line: " << error.line << " column: " << error.column
              << " offset: " << error.offset
              << " size: " << error.size << std::endl;
+        cout << "Error: " << error.decode() << std::endl;
     }
 
     while (!deserializer.empty()) {

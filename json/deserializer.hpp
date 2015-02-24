@@ -60,10 +60,34 @@ public:
     void set_limit(size_t limit = MAX_LIMIT_PER_OBJECT) { m_limit = limit; }
 
     struct Error {
+        enum class Code {
+            NONE,
+            END_OF_FILE,
+            MISS_VALUE,
+            MISS_QUOTE,
+            MISS_COMMA,
+            MISS_COLON,
+            MISS_CURLY_OPEN,
+            MISS_CURLY_CLOSE,
+            MISS_SQUARE_OPEN,
+            MISS_SQUARE_CLOSE,
+            NOT_MATCH_NULL,
+            NOT_MATCH_TRUE,
+            NOT_MATCH_FALSE,
+            INVALID_ESCAPE,
+            INVALID_UNICODE,
+            INVALID_NUMBER_INTEGER,
+            INVALID_NUMBER_FRACTION,
+            INVALID_NUMBER_EXPONENT
+        };
+
+        Code code;
         size_t line;
         size_t column;
         size_t size;
         size_t offset;
+
+        const char* decode();
     };
 
     bool is_invalid() const { return m_pos < m_end; }
@@ -76,6 +100,8 @@ private:
     const char* m_pos = nullptr;
     const char* m_end = nullptr;
     size_t m_limit = MAX_LIMIT_PER_OBJECT;
+    Error::Code m_error_code = Error::Code::NONE;
+
     void parsing();
 
     bool read_object(Value& value);
@@ -111,6 +137,9 @@ private:
     const char* get_position() const { return m_pos; }
     bool is_end() const { return m_pos >= m_end; }
     bool is_outbound(size_t offset) { return (m_pos + offset) > m_end; }
+
+    void clear_error() { m_error_code = Error::Code::NONE; }
+    void set_error(Error::Code error_code);
 };
 
 }
