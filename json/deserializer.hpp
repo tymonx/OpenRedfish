@@ -80,6 +80,9 @@ private:
     bool read_number_integer(std::string& str);
     bool read_number_fractional(std::string& str);
     bool read_number_exponent(std::string& str);
+    bool read_string_escape(std::string& str);
+    bool read_string_escape_code(std::string& str);
+    bool read_unicode(uint32_t& code);
     bool read_whitespaces();
 };
 

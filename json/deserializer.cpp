@@ -45,21 +45,19 @@
 
 #include <cmath>
 #include <cstring>
-#include <iostream>
-
-#include <iostream>
-
-using std::cout;
-using std::endl;
 
 using namespace json;
+using Surrogate = std::pair<unsigned, unsigned>;
 
 static constexpr char JSON_NULL[] = "null";
 static constexpr char JSON_TRUE[] = "true";
 static constexpr char JSON_FALSE[] = "false";
+static constexpr size_t JSON_ESCAPE_HEX_DIGITS_SIZE = 6;
+static constexpr Surrogate SURROGATE_MIN(0xD800, 0xDC00);
+static constexpr Surrogate SURROGATE_MAX(0xDBFF, 0xDFFF);
 
 template<size_t N>
-constexpr size_t length(char const (&)[N]) { return (N - 1); }
+constexpr size_t length(const char (&)[N]) { return (N - 1); }
 
 Deserializer::Deserializer() :
     Array(), m_pos(nullptr), m_end(nullptr) { }
@@ -126,7 +124,10 @@ bool Deserializer::read_string(Value& value) {
     if (!read_quote()) { return false; }
 
     while (m_pos < m_end) {
-        if ('"' != *m_pos) {
+        if ('\\' == *m_pos) {
+            m_pos++;
+            if (!read_string_escape(str)) { return false; };
+        } else if ('"' != *m_pos) {
             str.push_back(*(m_pos++));
         } else {
             value = str;
@@ -136,6 +137,95 @@ bool Deserializer::read_string(Value& value) {
     }
 
     return false;
+}
+
+bool Deserializer::read_string_escape(std::string& str) {
+    bool ok = true;
+
+    switch (*m_pos) {
+    case '"':
+    case '\\':
+    case '/':
+        str.push_back(*(m_pos++));
+        break;
+    case 'b':
+        str.push_back('\b');
+        ++m_pos;
+        break;
+    case 'f':
+        str.push_back('\f');
+        ++m_pos;
+        break;
+    case 'n':
+        str.push_back('\n');
+        ++m_pos;
+        break;
+    case 'r':
+        str.push_back('\r');
+        ++m_pos;
+        break;
+    case 't':
+        str.push_back('\t');
+        ++m_pos;
+        break;
+    case 'u':
+        --m_pos;
+        ok = read_string_escape_code(str);
+        break;
+    default:
+        ok = false;
+        break;
+    }
+
+    return ok;
+}
+
+bool Deserializer::read_string_escape_code(std::string& str) {
+    Surrogate surrogate;
+    uint32_t code;
+
+    if (!read_unicode(code)) { return false; }
+    if (read_unicode(surrogate.second)) {
+        surrogate.first = code;
+        if ((SURROGATE_MIN <= surrogate) && (surrogate <= SURROGATE_MAX)) {
+            code = 0x10000 | ((0x3F & surrogate.first) << 10) | (0x3FF & surrogate.second);
+        } else { m_pos -= JSON_ESCAPE_HEX_DIGITS_SIZE; }
+    }
+
+    if (code < 0x80) {
+        str.push_back(char(code));
+    } else if (code < 0x800) {
+        str.push_back(0xC0 | char(0x1F & (code >> 6)));
+        str.push_back(0x80 | char(0x3F & (code >> 0)));
+    } else if (code < 0x10000) {
+        str.push_back(0xE0 | char(0x0F & (code >> 12)));
+        str.push_back(0x80 | char(0x3F & (code >> 6)));
+        str.push_back(0x80 | char(0x3F & (code >> 0)));
+    } else {
+        str.push_back(0xF0 | char(0x07 & (code >> 18)));
+        str.push_back(0x80 | char(0x3F & (code >> 12)));
+        str.push_back(0x80 | char(0x3F & (code >> 6)));
+        str.push_back(0x80 | char(0x3F & (code >> 0)));
+    }
+
+    return true;
+}
+
+bool Deserializer::read_unicode(uint32_t& code) {
+    if ((m_pos + JSON_ESCAPE_HEX_DIGITS_SIZE) > m_end) { return false; }
+    if ('\\' != m_pos[0]) { return false; }
+    if ('u' != m_pos[1]) { return false; }
+
+    for (size_t i = 2; i < JSON_ESCAPE_HEX_DIGITS_SIZE; i++) {
+        if (!std::isxdigit(m_pos[i])) { return false; }
+    }
+
+    size_t pos;
+    code = unsigned(std::stoul(&m_pos[2], &pos, 16));
+
+    m_pos += JSON_ESCAPE_HEX_DIGITS_SIZE;
+
+    return true;
 }
 
 bool Deserializer::read_value(Value& value) {

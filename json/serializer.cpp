@@ -45,6 +45,10 @@
 
 using namespace json;
 
+static constexpr char JSON_NULL[] = "null";
+static constexpr char JSON_TRUE[] = "true";
+static constexpr char JSON_FALSE[] = "false";
+
 Serializer::Serializer() : String() { }
 
 Serializer::Serializer(const Value& value) : String() {
@@ -139,9 +143,9 @@ void Serializer::write_number(const Value& value) {
 }
 
 void Serializer::write_boolean(const Value& value) {
-    append((true == Bool(value)) ? "true" : "false");
+    append((true == Bool(value)) ? JSON_TRUE : JSON_FALSE);
 }
 
 void Serializer::write_empty(const Value&) {
-    append("null");
+    append(JSON_NULL);
 }

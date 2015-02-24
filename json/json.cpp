@@ -434,7 +434,7 @@ size_t Value::erase(const String& key) {
 
 Value& Value::Value::operator[](const String& key) {
     if (!is_object()) {
-        if (is_null()) { *this = std::move(Value(Type::OBJECT)); }
+        if (is_null()) { *this = Type::OBJECT; }
         else { return *this; }
     }
 
@@ -462,7 +462,7 @@ const Value& Value::Value::operator[](const String& key) const {
 }
 
 Value& Value::Value::operator[](size_t index) {
-    if (is_null()) { *this = std::move(Value(Type::ARRAY)); }
+    if (is_null()) { *this = Type::ARRAY; }
 
     if (is_array()) {
         if (size() == index) {
@@ -491,7 +491,7 @@ const Value& Value::Value::operator[](size_t index) const {
 }
 
 void Value::push_back(const Value& value) {
-    if (is_null()) { *this = std::move(Value(Type::ARRAY)); }
+    if (is_null()) { *this = Value(Type::ARRAY); }
 
     if (is_array()) {
         m_array.push_back(value);
@@ -499,7 +499,7 @@ void Value::push_back(const Value& value) {
 }
 
 void Value::push_back(const Pair& pair) {
-    if (is_null()) { *this = std::move(Value(Type::OBJECT)); }
+    if (is_null()) { *this = Type::OBJECT; }
 
     if (is_object()) {
         operator[](pair.first) = pair.second;
@@ -523,7 +523,7 @@ void Value::pop_back() {
         return;
     }
 
-    *this = std::move(Value());
+    *this = Type::EMPTY;
 }
 
 void Value::swap(Value& value) {

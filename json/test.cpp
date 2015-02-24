@@ -124,7 +124,7 @@ int main(void) {
 
     json::Deserializer deserializer(R"({"key1":true, "key3": 
         
-        false  , "ke\y5": [ {"a": 4}, [], 5,
+        false  , "ke5": [ {"a": 4}, [], 5,
                
                [2, true, 6], true, false  ], "key7":0.3e+4 })");
     json::Value val4;
@@ -133,13 +133,7 @@ int main(void) {
 
     deserializer >> val4;
 
-    json::Deserializer(R"({
-        "ad": 
-5       
-
-    }{"a": 7}
-{ "face": "😂" }
-)") >> val5 >> val6;
+    json::Deserializer(R"({"ad":5}{"face1": "\uD83D\uDE02"}{"face2":"😂" })") >> val5 >> val6;
 
     cout << "Deserializer: " << val4 << endl;
     cout << "Deserializer: " << val5 << endl;
