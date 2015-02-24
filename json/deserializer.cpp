@@ -155,7 +155,7 @@ bool Deserializer::read_string(Value& value) {
             str.push_back(get_char());
             next_char();
         } else {
-            value = str;
+            value = std::move(str);
             next_char();
             return true;
         }
