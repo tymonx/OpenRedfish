@@ -45,10 +45,15 @@
 
 #include <cmath>
 #include <limits>
+#include <type_traits>
 
 using namespace json;
 
-static const Value& g_null_value = Value(Value::Type::NIL);
+using aligned_value = std::aligned_storage<sizeof(Value),
+      std::alignment_of<Value>::value>::type;
+
+static const aligned_value _aligned_value{};
+static const Value& g_null_value = reinterpret_cast<const Value&>(_aligned_value);
 
 Number::Number() : m_type(Type::INT), m_int(0) { }
 
