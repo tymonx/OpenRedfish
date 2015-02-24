@@ -58,9 +58,21 @@ public:
 
     Deserializer& operator<<(const std::string& str);
     Deserializer& operator>>(Value& value);
+
+    size_t get_line() const { return m_file_line; }
+    size_t get_column() const { return m_file_char; }
+    bool is_invalid() const { return m_pos < m_end; }
 private:
-    const char* m_pos;
-    const char* m_end;
+    static constexpr size_t MAX_SIZE = 4096;
+
+    const char* m_begin = nullptr;
+    const char* m_pos = nullptr;
+    const char* m_end = nullptr;
+    size_t m_file_line = 1;
+    size_t m_file_char = 1;
+    size_t max_size = MAX_SIZE;
+    void parsing();
+
     bool read_object(Value& value);
     bool read_string(Value& value);
     bool read_value(Value& value);
@@ -84,6 +96,18 @@ private:
     bool read_string_escape_code(std::string& str);
     bool read_unicode(uint32_t& code);
     bool read_whitespaces();
+
+    void prev_char() { --m_pos; --m_file_char; }
+    void next_char() { ++m_pos; ++m_file_char; }
+    void back_chars(size_t count) { m_pos -= count; m_file_char -= count; }
+    void skip_chars(size_t count) { m_pos += count; m_file_char += count; }
+    void next_newline() { ++m_pos; ++m_file_line; m_file_char = 0; }
+    void reset_counts() { m_file_line = 1; m_file_char = 1; }
+
+    char get_char() const { return *m_pos; }
+    const char* get_position() const { return m_pos; }
+    bool is_end() const { return m_pos >= m_end; }
+    bool is_outbound(size_t offset) { return (m_pos + offset) > m_end; }
 };
 
 }

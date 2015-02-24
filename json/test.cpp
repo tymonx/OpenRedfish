@@ -122,7 +122,7 @@ int main(void) {
         cout << "Foreach type: " << int(data.type()) << endl;
     }
 
-    json::Deserializer deserializer(R"({"key1":true, "key3": 
+    json::Deserializer deserializer1(R"({"key1":true, "key3": 
         
         false  , "ke5": [ {"a": 4}, [], 5,
                
@@ -131,13 +131,23 @@ int main(void) {
     json::Value val5;
     json::Value val6;
 
-    deserializer >> val4;
+    deserializer1 >> val4;
 
-    json::Deserializer(R"({"ad":5}{"face1": "\uD83D\uDE02"}{"face2":"😂" })") >> val5 >> val6;
+    json::Deserializer deserializer(R"({"ad":true}
+    {"face1": "\uD83D\uDE02"}
+    {"face2":"😂" }
+    {"face3": "\u01EC"}
+    )");
 
-    cout << "Deserializer: " << val4 << endl;
-    cout << "Deserializer: " << val5 << endl;
-    cout << "Deserializer: " << val6 << endl;
+    if (deserializer.is_invalid()) {
+        cout << "Error in line: " << deserializer.get_line()
+             << " at position: " << deserializer.get_column() << std::endl;
+    }
+
+    while (!deserializer.empty()) {
+        deserializer >> val4;
+        cout << "Deserializer: " << val4 << endl;
+    }
 
     return 0;
 }
