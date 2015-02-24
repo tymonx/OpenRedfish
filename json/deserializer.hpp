@@ -64,17 +64,20 @@ public:
         size_t size;
     };
 
+    void set_limit(size_t limit = MAX_LIMIT_PER_OBJECT) { m_limit = limit; }
+
     bool is_invalid() const { return m_pos < m_end; }
     Error get_error() const;
 private:
-    static constexpr size_t MAX_SIZE = 4096;
+    /*! Stack protection */
+    static constexpr size_t MAX_LIMIT_PER_OBJECT = 8096;
 
     const char* m_begin = nullptr;
     const char* m_pos = nullptr;
     const char* m_end = nullptr;
     size_t m_file_line = 1;
     size_t m_file_column = 1;
-    size_t max_size = MAX_SIZE;
+    size_t m_limit = MAX_LIMIT_PER_OBJECT;
     void parsing();
 
     bool read_object(Value& value);

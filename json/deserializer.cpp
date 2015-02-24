@@ -102,9 +102,18 @@ Deserializer& Deserializer::operator>>(Value& value) {
 
 void Deserializer::parsing() {
     Value root;
+
+    const char* store_end = m_end;
+
+    m_end = m_begin + m_limit;
     while (read_object(root)) {
         push_back(std::move(root));
+
+        const char* tmp_end = m_pos + m_limit;
+        m_end = tmp_end < store_end ? tmp_end : store_end;
     }
+
+    m_end = store_end;
 }
 
 Deserializer::Error Deserializer::get_error() const {
