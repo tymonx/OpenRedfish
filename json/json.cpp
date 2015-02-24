@@ -48,9 +48,7 @@
 
 using namespace json;
 
-static const unsigned char g_empty_value[sizeof(Value)]{};
-static const unsigned char& g_empty_ref = g_empty_value[0];
-static const Value& g_null_value = reinterpret_cast<const Value&>(g_empty_ref);
+static const Value& g_null_value = Value(Value::Type::NIL);
 
 Number::Number() : m_type(Type::INT), m_int(0) { }
 
