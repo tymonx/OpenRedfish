@@ -66,7 +66,7 @@ public:
 
     void set_mode(Mode mode);
     void enable_newline(bool enable = true) { m_enable_newline = enable; }
-    void set_indent(size_t indent = DEFAULT_INDENT) { m_indent = indent; }
+    void set_indent(size_t indent) { m_indent = indent; }
 private:
     size_t m_level = 0;
     size_t m_indent = DEFAULT_INDENT;
