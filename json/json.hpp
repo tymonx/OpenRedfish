@@ -110,12 +110,12 @@ private:
 class Value {
 public:
     enum class Type {
+        NIL,
         OBJECT,
         ARRAY,
         STRING,
         NUMBER,
-        BOOLEAN,
-        NIL
+        BOOLEAN
     };
 
     Value(Type type = Type::NIL);
@@ -241,6 +241,8 @@ public:
     explicit operator const Object&() const { return m_object; }
 
     explicit operator const Number&() const { return m_number; }
+
+    bool operator!() const { return is_null(); }
 
     friend bool operator==(const Value& val1, const Value& val2);
 

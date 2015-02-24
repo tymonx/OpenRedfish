@@ -117,6 +117,14 @@ int main(void) {
     json::Value val5;
     json::Value val6;
 
+    val6["test1"] = 5;
+
+    const json::Value& test1 = val6;
+    const json::Value& test2 = val5;
+
+    cout << "Test1: " << (test1["test1"] == nullptr) << endl;
+    cout << "Test2: " << (test2["test2"] == nullptr) << endl;
+
     json::Deserializer deserializer(R"({"key1":true, "key3": 
         
         false  , "ke5": [ {"a": 4}, [], 5,

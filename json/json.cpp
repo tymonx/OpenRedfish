@@ -48,6 +48,10 @@
 
 using namespace json;
 
+static const unsigned char g_empty_value[sizeof(Value)]{};
+static const unsigned char& g_empty_ref = g_empty_value[0];
+static const Value& g_null_value = reinterpret_cast<const Value&>(g_empty_ref);
+
 Number::Number() : m_type(Type::INT), m_int(0) { }
 
 Number::Number(Int value) : m_type(Type::INT), m_int(value) { }
@@ -458,7 +462,7 @@ const Value& Value::Value::operator[](const String& key) const {
         }
     }
 
-    return *this;
+    return g_null_value;
 }
 
 Value& Value::Value::operator[](size_t index) {
