@@ -69,7 +69,7 @@ Deserializer::Deserializer(const char* str) :
     parsing();
 }
 
-Deserializer::Deserializer(const std::string& str) :
+Deserializer::Deserializer(const String& str) :
     m_begin(str.data()),
     m_pos(m_begin),
     m_end(m_begin + str.size()) {
@@ -77,7 +77,7 @@ Deserializer::Deserializer(const std::string& str) :
     parsing();
 }
 
-Deserializer& Deserializer::operator<<(const std::string& str) {
+Deserializer& Deserializer::operator<<(const String& str) {
     reset_counts();
 
     m_begin = str.data();
@@ -155,7 +155,7 @@ bool Deserializer::read_string(Value& value) {
     return false;
 }
 
-bool Deserializer::read_string_escape(std::string& str) {
+bool Deserializer::read_string_escape(String& str) {
     bool ok = true;
 
     switch (get_char()) {
@@ -197,7 +197,7 @@ bool Deserializer::read_string_escape(std::string& str) {
     return ok;
 }
 
-bool Deserializer::read_string_escape_code(std::string& str) {
+bool Deserializer::read_string_escape_code(String& str) {
     Surrogate surrogate;
     uint32_t code;
 
@@ -366,7 +366,7 @@ bool Deserializer::read_whitespaces() {
     return false;
 }
 
-bool Deserializer::read_number_digit(std::string& str) {
+bool Deserializer::read_number_digit(String& str) {
     bool ok = false;
 
     while (!is_end()) {
@@ -380,7 +380,7 @@ bool Deserializer::read_number_digit(std::string& str) {
     return ok;
 }
 
-bool Deserializer::read_number_integer(std::string& str) {
+bool Deserializer::read_number_integer(String& str) {
     if (is_end()) { return false; }
 
     if ('-' == get_char()) {
@@ -398,7 +398,7 @@ bool Deserializer::read_number_integer(std::string& str) {
     return read_number_digit(str);
 }
 
-bool Deserializer::read_number_fractional(std::string& str) {
+bool Deserializer::read_number_fractional(String& str) {
     if (is_end()) { return false; }
 
     bool ok = true;
@@ -412,7 +412,7 @@ bool Deserializer::read_number_fractional(std::string& str) {
     return ok;
 }
 
-bool Deserializer::read_number_exponent(std::string& str) {
+bool Deserializer::read_number_exponent(String& str) {
     if (is_end()) { return false; }
 
     if (('e' != get_char()) && ('E' != get_char())) { return true; }
@@ -434,9 +434,9 @@ bool Deserializer::read_number(Value& value) {
     using std::stod;
     using std::signbit;
 
-    std::string str_integer;
-    std::string str_fractional;
-    std::string str_exponent;
+    String str_integer;
+    String str_fractional;
+    String str_exponent;
 
     read_whitespaces();
     if (!read_number_integer(str_integer)) { return false; }

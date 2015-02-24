@@ -46,8 +46,6 @@
 
 #include "json.hpp"
 
-#include <string>
-
 namespace json {
 
 class Serializer : public String {

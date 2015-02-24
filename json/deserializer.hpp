@@ -46,17 +46,15 @@
 
 #include "json.hpp"
 
-#include <string>
-
 namespace json {
 
 class Deserializer : public Array {
 public:
     Deserializer();
     Deserializer(const char* str);
-    Deserializer(const std::string& str);
+    Deserializer(const String& str);
 
-    Deserializer& operator<<(const std::string& str);
+    Deserializer& operator<<(const String& str);
     Deserializer& operator>>(Value& value);
 
     struct Error {
@@ -94,12 +92,12 @@ private:
     bool read_false(Value& value);
     bool read_null(Value& value);
     bool read_number(Value& value);
-    bool read_number_digit(std::string& str);
-    bool read_number_integer(std::string& str);
-    bool read_number_fractional(std::string& str);
-    bool read_number_exponent(std::string& str);
-    bool read_string_escape(std::string& str);
-    bool read_string_escape_code(std::string& str);
+    bool read_number_digit(String& str);
+    bool read_number_integer(String& str);
+    bool read_number_fractional(String& str);
+    bool read_number_exponent(String& str);
+    bool read_string_escape(String& str);
+    bool read_string_escape_code(String& str);
     bool read_unicode(uint32_t& code);
     bool read_whitespaces();
 
@@ -118,4 +116,4 @@ private:
 
 }
 
-#endif /* JSON_DESERIALIZER_HPP_ */
+#endif /* _JSON_DESERIALIZER_HPP_ */
