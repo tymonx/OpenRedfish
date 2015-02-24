@@ -127,7 +127,7 @@ bool Deserializer::read_string(Value& value) {
 
     while (m_pos < m_end) {
         if ('"' != *m_pos) {
-            str += *(m_pos++);
+            str.push_back(*(m_pos++));
         } else {
             value = str;
             ++m_pos;
@@ -262,7 +262,7 @@ bool Deserializer::read_number_digit(std::string& str) {
 
     while (m_pos < m_end) {
         if (std::isdigit(*m_pos)) {
-            str += *(m_pos++);
+            str.push_back(*(m_pos++));
             ok = true;
         } else { return ok; }
     }
@@ -274,12 +274,12 @@ bool Deserializer::read_number_integer(std::string& str) {
     if (m_pos >= m_end) { return false; }
 
     if ('-' == *m_pos) {
-        str += *(m_pos++);
+        str.push_back(*(m_pos++));
         if (m_pos >= m_end) { return false; }
     }
 
     if ('0' == *m_pos) {
-        str += *(m_pos++);
+        str.push_back(*(m_pos++));
         return true;
     }
 
@@ -309,7 +309,7 @@ bool Deserializer::read_number_exponent(std::string& str) {
     if (m_pos >= m_end) { return false; }
 
     if (('+' == *m_pos) || ('-' == *m_pos)) {
-        str += *(m_pos++);
+        str.push_back(*(m_pos++));
     }
 
     return read_number_digit(str);

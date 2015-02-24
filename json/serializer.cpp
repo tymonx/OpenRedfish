@@ -60,20 +60,20 @@ Serializer& Serializer::operator<<(const Value& value) {
 }
 
 void Serializer::write_object(const Value& value) {
-    append("{");
+    push_back('{');
 
     if (value.size() > 0) {
         for (const auto& pair : Object(value)) {
             write_string(pair.first);
-            append(":");
+            push_back(':');
             write_value(pair.second);
-            append(",");
+            push_back(',');
         };
 
         pop_back();
     }
 
-    append("}");
+    push_back('}');
 }
 
 void Serializer::write_value(const Value& value) {
@@ -102,22 +102,24 @@ void Serializer::write_value(const Value& value) {
 }
 
 void Serializer::write_array(const Value& value) {
-    append("[");
+    push_back('[');
 
     if (value.size() > 0) {
         for (const auto& val : value) {
             write_value(val);
-            append(",");
+            push_back(',');
         }
 
         pop_back();
     }
 
-    append("]");
+    push_back(']');
 }
 
 void Serializer::write_string(const Value& value) {
-    append("\"" + String(value) + "\"");
+    push_back('"');
+    append(String(value));
+    push_back('"');
 }
 
 void Serializer::write_number(const Value& value) {
