@@ -133,16 +133,42 @@ int main(void) {
 
     deserializer1 >> val4;
 
-    json::Deserializer deserializer(R"({"ad":true}
+    json::Deserializer deserializer(R"({"ad":true}   
+         
     {"face1": "\uD83D\uDE02"}
     {"face2":"😂" }
     {"face3": "\u01EC"}
-    )");
+)");
+
+    deserializer << R"(
+    {
+        "aa":2,
+        "key1":5,
+        "key2": [1, 3, 5],
+        "key3":-7,
+        "key4":{
+            "subtest1":5,
+            "subtest2":true
+        },
+        "key5": {
+            "inkey4":"Test1",
+            "inkey5":"Test2"
+        },
+        "key6":[ 3, 2, 1, 0],
+        "key7":{"a":2,"b":4},
+        "key8":[
+            true,
+            true,
+            true,
+            true,
+            true
+        ]
+    }
+)";
 
     if (deserializer.is_invalid()) {
         auto error = deserializer.get_error();
-        cout << "Error in line: " << error.line
-             << " at position: " << error.column
+        cout << "Line: " << error.line << " column: " << error.column
              << " offset: " << error.offset
              << " size: " << error.size << std::endl;
     }

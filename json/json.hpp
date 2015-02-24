@@ -115,10 +115,10 @@ public:
         STRING,
         NUMBER,
         BOOLEAN,
-        EMPTY
+        NIL
     };
 
-    Value(Type type = Type::EMPTY);
+    Value(Type type = Type::NIL);
 
     Value(Null);
 
@@ -202,7 +202,7 @@ public:
 
     bool is_boolean() const { return Type::BOOLEAN == m_type; }
 
-    bool is_null() const { return Type::EMPTY == m_type; }
+    bool is_null() const { return Type::NIL == m_type; }
 
     bool is_int() const {
         return is_number() ? Number(m_number).is_int() : false;

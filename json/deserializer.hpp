@@ -57,14 +57,14 @@ public:
     Deserializer& operator<<(const String& str);
     Deserializer& operator>>(Value& value);
 
+    void set_limit(size_t limit = MAX_LIMIT_PER_OBJECT) { m_limit = limit; }
+
     struct Error {
         size_t line;
         size_t column;
-        size_t offset;
         size_t size;
+        size_t offset;
     };
-
-    void set_limit(size_t limit = MAX_LIMIT_PER_OBJECT) { m_limit = limit; }
 
     bool is_invalid() const { return m_pos < m_end; }
     Error get_error() const;
@@ -75,8 +75,6 @@ private:
     const char* m_begin = nullptr;
     const char* m_pos = nullptr;
     const char* m_end = nullptr;
-    size_t m_file_line = 1;
-    size_t m_file_column = 1;
     size_t m_limit = MAX_LIMIT_PER_OBJECT;
     void parsing();
 
@@ -104,12 +102,10 @@ private:
     bool read_unicode(uint32_t& code);
     bool read_whitespaces();
 
-    void prev_char() { --m_pos; --m_file_column; }
-    void next_char() { ++m_pos; ++m_file_column; }
-    void back_chars(size_t count) { m_pos -= count; m_file_column -= count; }
-    void skip_chars(size_t count) { m_pos += count; m_file_column += count; }
-    void next_newline() { ++m_pos; ++m_file_line; m_file_column = 0; }
-    void reset_counts() { m_file_line = 1; m_file_column = 1; }
+    void prev_char() { --m_pos; }
+    void next_char() { ++m_pos; }
+    void back_chars(size_t count) { m_pos -= count; }
+    void skip_chars(size_t count) { m_pos += count; }
 
     char get_char() const { return *m_pos; }
     const char* get_position() const { return m_pos; }

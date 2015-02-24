@@ -51,7 +51,7 @@ static constexpr char JSON_FALSE[] = "false";
 
 Serializer::Serializer() : String() { }
 
-Serializer::Serializer(const Value& value) : String() {
+Serializer::Serializer(const Value& value) {
     operator<<(value);
 }
 
@@ -97,7 +97,7 @@ void Serializer::write_value(const Value& value) {
     case Value::Type::BOOLEAN:
         write_boolean(value);
         break;
-    case Value::Type::EMPTY:
+    case Value::Type::NIL:
         write_empty(value);
         break;
     default:

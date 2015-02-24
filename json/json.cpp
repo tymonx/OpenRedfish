@@ -150,7 +150,7 @@ Value::Value(Type type) : m_type(type) {
     create_container(m_type);
 }
 
-Value::Value(Null) : m_type(Type::EMPTY) { }
+Value::Value(Null) : m_type(Type::NIL) { }
 
 Value::Value(Bool boolean) : m_type(Type::BOOLEAN) {
     m_boolean = boolean;
@@ -220,7 +220,7 @@ Value::~Value() {
         m_number.~Number();
         break;
     case Type::BOOLEAN:
-    case Type::EMPTY:
+    case Type::NIL:
     default:
         break;
     }
@@ -244,7 +244,7 @@ void Value::create_container(Type type) {
     case Type::BOOLEAN:
         m_boolean = false;
         break;
-    case Type::EMPTY:
+    case Type::NIL:
     default:
         break;
     }
@@ -286,7 +286,7 @@ Value& Value::operator=(const Value& value) {
     case Type::BOOLEAN:
         m_boolean = value.m_boolean;
         break;
-    case Type::EMPTY:
+    case Type::NIL:
     default:
         break;
     }
@@ -320,12 +320,12 @@ Value& Value::operator=(Value&& value) {
     case Type::BOOLEAN:
         m_boolean = std::move(value.m_boolean);
         break;
-    case Type::EMPTY:
+    case Type::NIL:
     default:
         break;
     }
 
-    value.m_type = Type::EMPTY;
+    value.m_type = Type::NIL;
 
     return *this;
 }
@@ -383,7 +383,7 @@ size_t Value::size() const {
     case Type::BOOLEAN:
         size = 1;
         break;
-    case Type::EMPTY:
+    case Type::NIL:
     default:
         size = 0;
         break;
@@ -413,7 +413,7 @@ void Value::clear() {
     case Type::BOOLEAN:
         m_boolean = false;
         break;
-    case Type::EMPTY:
+    case Type::NIL:
     default:
         break;
     }
@@ -523,7 +523,7 @@ void Value::pop_back() {
         return;
     }
 
-    *this = Type::EMPTY;
+    *this = Type::NIL;
 }
 
 void Value::swap(Value& value) {
@@ -555,7 +555,7 @@ bool json::operator==(const Value& val1, const Value& val2) {
     case Value::Type::BOOLEAN:
         result = (val1.m_boolean == val2.m_boolean);
         break;
-    case Value::Type::EMPTY:
+    case Value::Type::NIL:
         result = true;
         break;
     default:

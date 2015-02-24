@@ -78,8 +78,6 @@ Deserializer::Deserializer(const String& str) :
 }
 
 Deserializer& Deserializer::operator<<(const String& str) {
-    reset_counts();
-
     m_begin = str.data();
     m_pos = m_begin;
     m_end = m_begin + str.size();
@@ -91,7 +89,7 @@ Deserializer& Deserializer::operator<<(const String& str) {
 
 Deserializer& Deserializer::operator>>(Value& value) {
     if (empty()) {
-        value = Value::Type::EMPTY;
+        value = Value::Type::NIL;
     } else {
         value = std::move(back());
         pop_back();
@@ -119,10 +117,22 @@ void Deserializer::parsing() {
 Deserializer::Error Deserializer::get_error() const {
     Error error;
 
-    error.line = m_file_line;
-    error.column = m_file_column;
+    error.line = 1;
+    error.column = 1;
     error.offset = size_t(m_pos - m_begin);
     error.size = size_t(m_end - m_begin);
+
+    const char* search = m_begin;
+
+    while (search < m_pos) {
+        if ('\n' == *search) {
+            ++error.line;
+            error.column = 1;
+        } else {
+            ++error.column;
+        }
+        search++;
+    }
 
     return error;
 }
@@ -206,6 +216,13 @@ bool Deserializer::read_string_escape(String& str) {
     return ok;
 }
 
+static inline
+uint32_t decode_utf16_surrogate_pair(const Surrogate& surrogate) {
+    return 0x10000
+        | ((0x03F & surrogate.first) << 10)
+        |  (0x3FF & surrogate.second);
+}
+
 bool Deserializer::read_string_escape_code(String& str) {
     Surrogate surrogate;
     uint32_t code;
@@ -214,7 +231,7 @@ bool Deserializer::read_string_escape_code(String& str) {
     if (read_unicode(surrogate.second)) {
         surrogate.first = code;
         if ((SURROGATE_MIN <= surrogate) && (surrogate <= SURROGATE_MAX)) {
-            code = 0x10000 | ((0x3F & surrogate.first) << 10) | (0x3FF & surrogate.second);
+            code = decode_utf16_surrogate_pair(surrogate);
         } else { back_chars(ESCAPE_HEX_DIGITS_SIZE); }
     }
 
@@ -359,10 +376,8 @@ bool Deserializer::read_comma() {
 bool Deserializer::read_whitespaces() {
     while (!is_end()) {
         switch (get_char()) {
-        case '\n':
-            next_newline();
-            break;
         case ' ':
+        case '\n':
         case '\r':
         case '\t':
             next_char();
