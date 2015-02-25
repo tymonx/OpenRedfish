@@ -57,7 +57,7 @@ public:
     Deserializer& operator<<(const String& str);
     Deserializer& operator>>(Value& value);
 
-    void set_limit(size_t limit = MAX_LIMIT_PER_OBJECT) { m_limit = limit; }
+    void set_limit(size_t limit = MAX_LIMIT_PER_OBJECT);
 
     struct Error {
         enum class Code {
@@ -90,17 +90,17 @@ public:
         const char* decode();
     };
 
-    bool is_invalid() const { return m_pos < m_end; }
+    bool is_invalid() const;
     Error get_error() const;
 private:
     /*! Stack protection */
-    static constexpr size_t MAX_LIMIT_PER_OBJECT = 8096;
+    static const size_t MAX_LIMIT_PER_OBJECT;
 
-    const char* m_begin = nullptr;
-    const char* m_pos = nullptr;
-    const char* m_end = nullptr;
-    size_t m_limit = MAX_LIMIT_PER_OBJECT;
-    Error::Code m_error_code = Error::Code::NONE;
+    const char* m_begin;
+    const char* m_pos;
+    const char* m_end;
+    size_t m_limit;
+    Error::Code m_error_code;
 
     void parsing();
 
@@ -128,17 +128,17 @@ private:
     bool read_unicode(uint32_t& code);
     bool read_whitespaces();
 
-    void prev_char() { --m_pos; }
-    void next_char() { ++m_pos; }
-    void back_chars(size_t count) { m_pos -= count; }
-    void skip_chars(size_t count) { m_pos += count; }
+    void prev_char();
+    void next_char();
+    void back_chars(size_t count);
+    void skip_chars(size_t count);
 
-    char get_char() const { return *m_pos; }
-    const char* get_position() const { return m_pos; }
-    bool is_end() const { return m_pos >= m_end; }
-    bool is_outbound(size_t offset) { return (m_pos + offset) > m_end; }
+    char get_char() const;
+    const char* get_position() const;
+    bool is_end() const;
+    bool is_outbound(size_t offset);
 
-    void clear_error() { m_error_code = Error::Code::NONE; }
+    void clear_error();
     void set_error(Error::Code error_code);
 };
 

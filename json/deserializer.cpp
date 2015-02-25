@@ -50,6 +50,7 @@ using namespace json;
 using Code = Deserializer::Error::Code;
 using Surrogate = std::pair<unsigned, unsigned>;
 
+const size_t Deserializer::MAX_LIMIT_PER_OBJECT = 8096;
 static constexpr char JSON_NULL[] = "null";
 static constexpr char JSON_TRUE[] = "true";
 static constexpr char JSON_FALSE[] = "false";
@@ -63,21 +64,30 @@ constexpr size_t length(const char (&)[N]) { return (N - 1); }
 template<class T, size_t N>
 constexpr size_t array_size(T (&)[N]) { return N; }
 
-Deserializer::Deserializer() { }
+Deserializer::Deserializer() :
+    m_begin(nullptr),
+    m_pos(nullptr),
+    m_end(nullptr),
+    m_limit(MAX_LIMIT_PER_OBJECT),
+    m_error_code(Error::Code::NONE) { }
 
 Deserializer::Deserializer(const char* str) :
     m_begin(str),
     m_pos(m_begin),
-    m_end((nullptr == m_begin) ? nullptr : m_begin + std::strlen(str)) {
-
+    m_end((nullptr == m_begin) ? nullptr : m_begin + std::strlen(str)),
+    m_limit(MAX_LIMIT_PER_OBJECT),
+    m_error_code(Error::Code::NONE)
+{
     parsing();
 }
 
 Deserializer::Deserializer(const String& str) :
     m_begin(str.data()),
     m_pos(m_begin),
-    m_end(m_begin + str.size()) {
-
+    m_end(m_begin + str.size()),
+    m_limit(MAX_LIMIT_PER_OBJECT),
+    m_error_code(Error::Code::NONE)
+{
     parsing();
 }
 
@@ -104,6 +114,10 @@ Deserializer& Deserializer::operator>>(Value& value) {
     return *this;
 }
 
+void Deserializer::set_limit(size_t limit) {
+    m_limit = limit;
+}
+
 void Deserializer::parsing() {
     Value root;
 
@@ -118,6 +132,42 @@ void Deserializer::parsing() {
     }
 
     m_end = store_end;
+}
+
+void Deserializer::prev_char() {
+    --m_pos;
+}
+
+void Deserializer::next_char() {
+    ++m_pos;
+}
+
+void Deserializer::back_chars(size_t count) {
+    m_pos -= count;
+}
+
+void Deserializer::skip_chars(size_t count) {
+    m_pos += count;
+}
+
+char Deserializer::get_char() const {
+    return *m_pos;
+}
+
+const char* Deserializer::get_position() const {
+    return m_pos;
+}
+
+bool Deserializer::is_end() const {
+    return m_pos >= m_end;
+}
+
+bool Deserializer::is_outbound(size_t offset) {
+    return (m_pos + offset) > m_end;
+}
+
+void Deserializer::clear_error() {
+    m_error_code = Error::Code::NONE;
 }
 
 Deserializer::Error Deserializer::get_error() const {
@@ -142,6 +192,10 @@ Deserializer::Error Deserializer::get_error() const {
     }
 
     return error;
+}
+
+bool Deserializer::is_invalid() const {
+    return m_pos < m_end;
 }
 
 bool Deserializer::read_object(Value& value) {
