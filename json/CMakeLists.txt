@@ -31,10 +31,17 @@ set(SOURCES
     test.cpp
 )
 
-add_library(json-lib STATIC
+add_library(jsonc++ STATIC
     json.cpp
     serializer.cpp
     deserializer.cpp
 )
-add_executable(json ${SOURCES})
-target_link_libraries(json json-lib)
+
+add_executable(json_test ${SOURCES})
+target_link_libraries(json_test jsonc++)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
+    set_target_properties(jsonc++ PROPERTIES
+        COMPILE_FLAGS "-Wno-global-constructors"
+    )
+endif()

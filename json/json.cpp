@@ -50,11 +50,23 @@
 
 using namespace json;
 
-using aligned_value = std::aligned_storage<sizeof(Value),
-      std::alignment_of<Value>::value>::type;
+/*!
+ * @brief Raw aligned template memory
+ * */
+template<typename T>
+using raw_memory = typename std::aligned_storage<sizeof(T),
+      std::alignment_of<T>::value>::type;
 
-static const aligned_value _aligned_value{};
-static const Value& g_null_value = reinterpret_cast<const Value&>(_aligned_value);
+/*! Create raw aligned memory for Value object and initialize with zeros */
+static const raw_memory<Value> g_null_value_raw{};
+
+/*! Omit dereferencing type-punned pointer */
+static const void* g_null_value_ref = &g_null_value_raw;
+
+/*! Now we can cast raw memory to JSON value object */
+static const Value& g_null_value = *reinterpret_cast<const Value*>(
+        g_null_value_ref
+);
 
 Number::Number() : m_type(Type::INT), m_int(0) { }
 
@@ -128,7 +140,7 @@ Number::operator Double() const {
     return value;
 }
 
-Number::Type Number::type() const {
+Number::Type Number::get_type() const {
     return m_type;
 }
 
@@ -147,7 +159,7 @@ bool Number::is_double() const {
 bool json::operator==(const Number& num1, const Number& num2) {
     bool result = false;
 
-    switch (num1.type()) {
+    switch (num1.get_type()) {
     case Number::Type::INT:
         result = (num1.m_int == Int(num2));
         break;
@@ -167,7 +179,7 @@ bool json::operator==(const Number& num1, const Number& num2) {
 }
 
 Value::Value(Type type) : m_type(type) {
-    create_container(m_type);
+    create_container(type);
 }
 
 Value::Value(Null) : m_type(Type::NIL) { }
@@ -389,31 +401,31 @@ void Value::assign(size_t count, const Value& value) {
 }
 
 size_t Value::size() const {
-    size_t size = 0;
+    size_t value = 0;
 
     switch (m_type) {
     case Type::OBJECT:
-        size = m_object.size();
+        value = m_object.size();
         break;
     case Type::ARRAY:
-        size = m_array.size();
+        value = m_array.size();
         break;
     case Type::STRING:
-        size = m_string.size();
+        value = m_string.size();
         break;
     case Type::NUMBER:
-        size = 1;
+        value = 1;
         break;
     case Type::BOOLEAN:
-        size = 1;
+        value = 1;
         break;
     case Type::NIL:
     default:
-        size = 0;
+        value = 0;
         break;
     }
 
-    return size;
+    return value;
 }
 
 void Value::clear() {
@@ -428,7 +440,7 @@ void Value::clear() {
         m_string.clear();
         break;
     case Type::NUMBER:
-        m_number = Int(0);
+        m_number = 0;
         break;
     case Type::BOOLEAN:
         m_boolean = false;
@@ -455,7 +467,7 @@ const Value& Value::operator[](const String& key) const {
     return (*this)[key.c_str()];
 }
 
-Value::Type Value::type() const {
+Value::Type Value::get_type() const {
     return m_type;
 }
 
@@ -793,6 +805,8 @@ Value::BaseIterator::BaseIterator(const Object::const_iterator& it) :
     m_type(Value::Type::OBJECT),
     m_object_const_iterator(it) { }
 
+Value::BaseIterator::~BaseIterator() { }
+
 bool json::operator==(const Value::BaseIterator& it1,
         const Value::BaseIterator& it2) {
     if (it1.m_type != it2.m_type) {
@@ -875,6 +889,8 @@ Value::iterator::iterator(const Array::iterator& it) : BaseIterator(it) { }
 
 Value::iterator::iterator(const Object::iterator& it) : BaseIterator(it) { }
 
+Value::iterator::~iterator() { }
+
 Value::iterator& Value::iterator::operator++() {
     increment();
     return *this;
@@ -901,6 +917,8 @@ Value::const_iterator::const_iterator(const Array::const_iterator& it) :
 
 Value::const_iterator::const_iterator(const Object::const_iterator& it) :
     BaseIterator(it) { }
+
+Value::const_iterator::~const_iterator() { }
 
 const Value::const_iterator& Value::const_iterator::operator++() {
     const_increment();

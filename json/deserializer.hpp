@@ -48,7 +48,7 @@
 
 namespace json {
 
-class Deserializer : public Array {
+class Deserializer {
 public:
     Deserializer();
     Deserializer(const char* str);
@@ -57,7 +57,13 @@ public:
     Deserializer& operator<<(const String& str);
     Deserializer& operator>>(Value& value);
 
+    Deserializer(const Deserializer&) = default;
+    Deserializer& operator=(const Deserializer&) = default;
+
     void set_limit(size_t limit = MAX_LIMIT_PER_OBJECT);
+
+    bool empty() const;
+    size_t size() const;
 
     struct Error {
         enum class Code {
@@ -95,6 +101,8 @@ public:
 private:
     /*! Stack protection */
     static const size_t MAX_LIMIT_PER_OBJECT;
+
+    Array m_array;
 
     const char* m_begin;
     const char* m_pos;

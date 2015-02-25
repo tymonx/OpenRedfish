@@ -59,7 +59,7 @@ int main(void) {
 
     val = -1;
 
-    cout << json::Int(val.type()) << endl;
+    cout << json::Int(val.get_type()) << endl;
     cout << json::Int(val) << endl;
     cout << (val == 2) << endl;
 

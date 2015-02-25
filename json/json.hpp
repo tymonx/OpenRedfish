@@ -89,7 +89,7 @@ public:
 
     friend bool operator!=(const Number& num1, const Number& num2);
 
-    Type type() const;
+    Type get_type() const;
 
     bool is_int() const;
 
@@ -202,7 +202,7 @@ public:
 
     const Value& operator[](const String& key) const;
 
-    Type type() const;
+    Type get_type() const;
 
     bool is_member(const std::string& key) const;
 
@@ -275,6 +275,10 @@ public:
 
         BaseIterator(const Object::const_iterator& it);
 
+        BaseIterator(const BaseIterator&) = default;
+
+        BaseIterator& operator=(const BaseIterator&) = default;
+
         void increment();
 
         void decrement();
@@ -290,6 +294,8 @@ public:
         bool is_array() const;
 
         bool is_object() const;
+
+        virtual ~BaseIterator();
     private:
         Value::Type m_type;
 
@@ -301,15 +307,21 @@ public:
         };
     };
 
-    class iterator :
-        public BaseIterator,
-        public std::iterator<std::forward_iterator_tag, Value> {
+    class iterator : public BaseIterator {
     public:
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = Value;
+        using reference = Value&;
+        using pointer = Value*;
+
         iterator();
 
         iterator(const Array::iterator& it);
 
         iterator(const Object::iterator& it);
+
+        iterator(const iterator&) = default;
 
         iterator& operator++();
 
@@ -318,17 +330,25 @@ public:
         reference operator*();
 
         pointer operator->();
+
+        ~iterator();
     };
 
-    class const_iterator :
-        public BaseIterator,
-        public std::iterator<std::forward_iterator_tag, const Value> {
+    class const_iterator : public BaseIterator {
     public:
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = Value;
+        using reference = const Value&;
+        using pointer = const Value*;
+
         const_iterator();
 
         const_iterator(const Array::const_iterator& it);
 
         const_iterator(const Object::const_iterator& it);
+
+        const_iterator(const const_iterator&) = default;
 
         const const_iterator& operator++();
 
@@ -337,6 +357,8 @@ public:
         reference operator*() const;
 
         pointer operator->() const;
+
+        ~const_iterator();
     };
 
     iterator begin();

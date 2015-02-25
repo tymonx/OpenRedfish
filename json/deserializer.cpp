@@ -65,6 +65,7 @@ template<class T, size_t N>
 constexpr size_t array_size(T (&)[N]) { return N; }
 
 Deserializer::Deserializer() :
+    m_array{},
     m_begin(nullptr),
     m_pos(nullptr),
     m_end(nullptr),
@@ -72,6 +73,7 @@ Deserializer::Deserializer() :
     m_error_code(Error::Code::NONE) { }
 
 Deserializer::Deserializer(const char* str) :
+    m_array{},
     m_begin(str),
     m_pos(m_begin),
     m_end((nullptr == m_begin) ? nullptr : m_begin + std::strlen(str)),
@@ -82,6 +84,7 @@ Deserializer::Deserializer(const char* str) :
 }
 
 Deserializer::Deserializer(const String& str) :
+    m_array{},
     m_begin(str.data()),
     m_pos(m_begin),
     m_end(m_begin + str.size()),
@@ -104,14 +107,22 @@ Deserializer& Deserializer::operator<<(const String& str) {
 }
 
 Deserializer& Deserializer::operator>>(Value& value) {
-    if (empty()) {
+    if (m_array.empty()) {
         value = Value::Type::NIL;
     } else {
-        value = std::move(back());
-        pop_back();
+        value = std::move(m_array.back());
+        m_array.pop_back();
     }
 
     return *this;
+}
+
+bool Deserializer::empty() const {
+    return m_array.empty();
+}
+
+size_t Deserializer::size() const {
+    return m_array.size();
 }
 
 void Deserializer::set_limit(size_t limit) {
@@ -125,7 +136,7 @@ void Deserializer::parsing() {
 
     m_end = m_begin + m_limit;
     while (read_object(root)) {
-        push_back(std::move(root));
+        m_array.push_back(std::move(root));
 
         const char* tmp_end = m_pos + m_limit;
         m_end = tmp_end < store_end ? tmp_end : store_end;
@@ -302,17 +313,17 @@ bool Deserializer::read_string_escape_code(String& str) {
     if (code < 0x80) {
         str.push_back(char(code));
     } else if (code < 0x800) {
-        str.push_back(0xC0 | char(0x1F & (code >> 6)));
-        str.push_back(0x80 | char(0x3F & (code >> 0)));
+        str.push_back(char(0xC0 | (0x1F & (code >>  6))));
+        str.push_back(char(0x80 | (0x3F & (code >>  0))));
     } else if (code < 0x10000) {
-        str.push_back(0xE0 | char(0x0F & (code >> 12)));
-        str.push_back(0x80 | char(0x3F & (code >> 6)));
-        str.push_back(0x80 | char(0x3F & (code >> 0)));
+        str.push_back(char(0xE0 | (0x0F & (code >> 12))));
+        str.push_back(char(0x80 | (0x3F & (code >>  6))));
+        str.push_back(char(0x80 | (0x3F & (code >>  0))));
     } else {
-        str.push_back(0xF0 | char(0x07 & (code >> 18)));
-        str.push_back(0x80 | char(0x3F & (code >> 12)));
-        str.push_back(0x80 | char(0x3F & (code >> 6)));
-        str.push_back(0x80 | char(0x3F & (code >> 0)));
+        str.push_back(char(0xF0 | (0x07 & (code >> 18))));
+        str.push_back(char(0x80 | (0x3F & (code >> 12))));
+        str.push_back(char(0x80 | (0x3F & (code >>  6))));
+        str.push_back(char(0x80 | (0x3F & (code >>  0))));
     }
 
     return true;
@@ -572,21 +583,21 @@ bool Deserializer::read_number(Value& value) {
         return false;
     }
 
-    long int integer = stol(str_integer);
-    double fractional = str_fractional.empty() ? 0.0 : stod(str_fractional);
-    long int exponent = str_exponent.empty() ? 0 : stol(str_exponent);
+    long integer = stol(str_integer);
+    Double fractional = str_fractional.empty() ? 0.0 : stod(str_fractional);
+    long exponent = str_exponent.empty() ? 0 : stol(str_exponent);
 
     if (str_fractional.empty()) {
         if (signbit(exponent)) {
-            value = Double(integer * pow(10, exponent));
+            value = Double(integer) * pow(10, exponent);
         } else {
-            integer *= pow(10, exponent);
+            integer *= Int(pow(10, exponent));
             if (signbit(integer)) { value = Int(integer); }
             else { value = Uint(integer); }
         }
     } else {
         fractional = ('-' == str_integer[0]) ? -fractional : fractional;
-        value = Double((integer + fractional) * pow(10, exponent));
+        value = (Double(integer) + fractional) * pow(10, exponent);
     }
 
     return true;

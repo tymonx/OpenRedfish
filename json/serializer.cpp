@@ -53,11 +53,25 @@ static constexpr char JSON_TRUE[] = "true";
 static constexpr char JSON_FALSE[] = "false";
 static constexpr char NEWLINE[] = "\n";
 
-Serializer::Serializer(Mode mode) : m_level(0) {
+Serializer::Serializer(Mode mode) :
+    m_serialized {},
+    m_level {},
+    m_indent {DEFAULT_INDENT},
+    m_enable_newline {false},
+    m_colon_start {},
+    m_colon_stop {}
+{
     set_mode(mode);
 }
 
-Serializer::Serializer(const Value& value, Mode mode) : m_level(0) {
+Serializer::Serializer(const Value& value, Mode mode) :
+    m_serialized {},
+    m_level {},
+    m_indent {DEFAULT_INDENT},
+    m_enable_newline {false},
+    m_colon_start {},
+    m_colon_stop {}
+{
     set_mode(mode);
     operator<<(value);
 }
@@ -74,7 +88,7 @@ Serializer& Serializer::operator<<(const Value& value) {
 
 std::ostream& json::operator<<(std::ostream& os,
         const Serializer& serializer) {
-    return os << serializer.c_str();
+    return os << serializer.m_serialized;
 }
 
 void Serializer::set_mode(Mode mode) {
@@ -106,35 +120,35 @@ void Serializer::set_indent(size_t indent) {
 
 void Serializer::write_object(const Value& value) {
     if (value.size() > 0) {
-        push_back('{');
+        m_serialized.push_back('{');
 
         ++m_level;
 
         size_t indent_length = m_indent * m_level;
 
         for (const auto& pair : Object(value)) {
-            append(NEWLINE, m_enable_newline);
-            append(indent_length, ' ');
+            m_serialized.append(NEWLINE, m_enable_newline);
+            m_serialized.append(indent_length, ' ');
             write_string(pair.first);
-            append(" : ", m_colon_start, m_colon_stop);
+            m_serialized.append(" : ", m_colon_start, m_colon_stop);
             write_value(pair.second);
-            push_back(',');
+            m_serialized.push_back(',');
         };
 
-        pop_back();
-        append(NEWLINE, m_enable_newline);
+        m_serialized.pop_back();
+        m_serialized.append(NEWLINE, m_enable_newline);
 
         --m_level;
 
-        append(m_indent * m_level, ' ');
-        push_back('}');
+        m_serialized.append(m_indent * m_level, ' ');
+        m_serialized.push_back('}');
     } else {
-        append("{}");
+        m_serialized.append("{}");
     }
 }
 
 void Serializer::write_value(const Value& value) {
-    switch (value.type()) {
+    switch (value.get_type()) {
     case Value::Type::OBJECT:
         write_object(value);
         break;
@@ -160,47 +174,47 @@ void Serializer::write_value(const Value& value) {
 
 void Serializer::write_array(const Value& value) {
     if (value.size() > 0) {
-        push_back('[');
+        m_serialized.push_back('[');
 
         ++m_level;
 
         size_t indent_length = m_indent * m_level;
 
         for (const auto& val : value) {
-            append(NEWLINE, m_enable_newline);
-            append(indent_length, ' ');
+            m_serialized.append(NEWLINE, m_enable_newline);
+            m_serialized.append(indent_length, ' ');
             write_value(val);
-            push_back(',');
+            m_serialized.push_back(',');
         }
 
-        pop_back();
-        append(NEWLINE, m_enable_newline);
+        m_serialized.pop_back();
+        m_serialized.append(NEWLINE, m_enable_newline);
 
         --m_level;
 
-        append(m_indent * m_level, ' ');
-        push_back(']');
+        m_serialized.append(m_indent * m_level, ' ');
+        m_serialized.push_back(']');
     } else {
-        append("[]");
+        m_serialized.append("[]");
     }
 }
 
 void Serializer::write_string(const Value& value) {
-    push_back('"');
-    append(String(value));
-    push_back('"');
+    m_serialized.push_back('"');
+    m_serialized.append(String(value));
+    m_serialized.push_back('"');
 }
 
 void Serializer::write_number(const Value& value) {
-    switch (Number(value).type()) {
+    switch (Number(value).get_type()) {
     case Number::Type::INT:
-        append(std::to_string(Int(value)));
+        m_serialized.append(std::to_string(Int(value)));
         break;
     case Number::Type::UINT:
-        append(std::to_string(Uint(value)));
+        m_serialized.append(std::to_string(Uint(value)));
         break;
     case Number::Type::DOUBLE:
-        append(std::to_string(Double(value)));
+        m_serialized.append(std::to_string(Double(value)));
         break;
     default:
         break;
@@ -208,9 +222,9 @@ void Serializer::write_number(const Value& value) {
 }
 
 void Serializer::write_boolean(const Value& value) {
-    append((true == Bool(value)) ? JSON_TRUE : JSON_FALSE);
+    m_serialized.append((true == Bool(value)) ? JSON_TRUE : JSON_FALSE);
 }
 
 void Serializer::write_empty(const Value&) {
-    append(JSON_NULL);
+    m_serialized.append(JSON_NULL);
 }
