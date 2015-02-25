@@ -89,13 +89,13 @@ public:
 
     friend bool operator!=(const Number& num1, const Number& num2);
 
-    Type type() const { return m_type; }
+    Type type() const;
 
-    bool is_int() const { return Type::INT == m_type; }
+    bool is_int() const;
 
-    bool is_uint() const { return Type::UINT == m_type; }
+    bool is_uint() const;
 
-    bool is_double() const { return Type::DOUBLE == m_type; }
+    bool is_double() const;
 
 private:
     enum Type m_type;
@@ -164,9 +164,9 @@ public:
 
     void assign(size_t count, const Value& value);
 
-    void assign(std::initializer_list<Pair> init_list) { *this = init_list; }
+    void assign(std::initializer_list<Pair> init_list);
 
-    void assign(std::initializer_list<Value> init_list) { *this = init_list; }
+    void assign(std::initializer_list<Value> init_list);
 
     void push_back(const Pair& pair);
 
@@ -178,9 +178,9 @@ public:
 
     void clear();
 
-    bool empty() const { return !size(); }
+    bool empty() const;
 
-    size_t erase(const String& key) { return erase(key.c_str()); }
+    size_t erase(const String& key);
 
     size_t erase(const char* key);
 
@@ -190,99 +190,81 @@ public:
 
     const Value& operator[](size_t index) const;
 
-    Value& operator[](int index) {
-        return (*this)[size_t(index)];
-    }
+    Value& operator[](int index);
 
-    const Value& operator[](int index) const {
-        return (*this)[size_t(index)];
-    }
+    const Value& operator[](int index) const;
 
     Value& operator[](const char* key);
 
     const Value& operator[](const char* key) const;
 
-    Value& operator[](const String& key) {
-        return (*this)[key.c_str()];
-    }
+    Value& operator[](const String& key);
 
-    const Value& operator[](const String& key) const {
-        return (*this)[key.c_str()];
-    }
+    const Value& operator[](const String& key) const;
 
-    Type type() const { return m_type; }
+    Type type() const;
 
-    bool is_member(const std::string& key) const {
-        return is_member(key.c_str());
-    }
+    bool is_member(const std::string& key) const;
 
     bool is_member(const char* key) const;
 
-    bool is_string() const { return Type::STRING == m_type; }
+    bool is_string() const;
 
-    bool is_object() const { return Type::OBJECT == m_type; }
+    bool is_object() const;
 
-    bool is_array() const { return Type::ARRAY == m_type; }
+    bool is_array() const;
 
-    bool is_number() const { return Type::NUMBER == m_type; }
+    bool is_number() const;
 
-    bool is_boolean() const { return Type::BOOLEAN == m_type; }
+    bool is_boolean() const;
 
-    bool is_null() const { return Type::NIL == m_type; }
+    bool is_null() const;
 
-    bool is_int() const {
-        return is_number() ? Number(m_number).is_int() : false;
-    }
+    bool is_int() const;
 
-    bool is_uint() const {
-        return is_number() ? Number(m_number).is_uint() : false;
-    }
+    bool is_uint() const;
 
-    bool is_double() const {
-        return is_number() ? Number(m_number).is_double() : false;
-    }
+    bool is_double() const;
 
-    explicit operator String&() { return m_string; }
+    explicit operator String&();
 
-    explicit operator const String&() const { return m_string; }
+    explicit operator const String&() const;
 
-    explicit operator const char*() const { return m_string.c_str(); }
+    explicit operator const char*() const;
 
-    explicit operator Bool() const { return m_boolean; }
+    explicit operator Bool() const;
 
-    explicit operator Null() const { return nullptr; }
+    explicit operator Null() const;
 
-    explicit operator Int() const { return Int(m_number); }
+    explicit operator Int() const;
 
-    explicit operator Uint() const { return Uint(m_number); }
+    explicit operator Uint() const;
 
-    explicit operator Double() const { return Double(m_number); }
+    explicit operator Double() const;
 
-    explicit operator Array&() { return m_array; }
+    explicit operator Array&();
 
-    explicit operator Number&() { return m_number; }
+    explicit operator Number&();
 
-    explicit operator const Array&() const { return m_array; }
+    explicit operator const Array&() const;
 
-    explicit operator const Object&() const { return m_object; }
+    explicit operator const Object&() const;
 
-    explicit operator const Number&() const { return m_number; }
+    explicit operator const Number&() const;
 
-    bool operator!() const { return is_null(); }
-
-    friend bool operator!=(const Value& val1, const Value& val2) {
-        return !(val1 == val2);
-    }
+    bool operator!() const;
 
     friend bool operator==(const Value& val1, const Value& val2);
 
+    friend bool operator!=(const Value& val1, const Value& val2);
+
     class BaseIterator {
     public:
-        friend bool operator!=(const Value::BaseIterator& it1,
-            const BaseIterator& it2) { return !(it1 == it2); }
-
         friend bool operator==(const BaseIterator& it1,
                 const BaseIterator& it2);
+
+        friend bool operator!=(const Value::BaseIterator& it1,
+            const BaseIterator& it2);
 
     protected:
         BaseIterator(const Array::iterator& it);
@@ -305,9 +287,9 @@ public:
 
         const Value& const_deref() const;
 
-        bool is_array() const { return Value::Type::ARRAY == m_type; }
+        bool is_array() const;
 
-        bool is_object() const { return Value::Type::OBJECT == m_type; }
+        bool is_object() const;
     private:
         Value::Type m_type;
 
@@ -333,9 +315,9 @@ public:
 
         iterator operator++(int);
 
-        reference operator*() { return deref(); }
+        reference operator*();
 
-        pointer operator->() { return &deref(); }
+        pointer operator->();
     };
 
     class const_iterator :
@@ -352,18 +334,18 @@ public:
 
         const const_iterator operator++(int);
 
-        reference operator*() const { return const_deref(); }
+        reference operator*() const;
 
-        pointer operator->() const { return &const_deref(); }
+        pointer operator->() const;
     };
 
     iterator begin();
 
     iterator end();
 
-    const_iterator begin() const { return std::move(cbegin()); }
+    const_iterator begin() const;
 
-    const_iterator end() const { return std::move(cend()); }
+    const_iterator end() const;
 
     const_iterator cbegin() const;
 

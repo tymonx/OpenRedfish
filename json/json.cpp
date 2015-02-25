@@ -128,6 +128,22 @@ Number::operator Double() const {
     return value;
 }
 
+Number::Type Number::type() const {
+    return m_type;
+}
+
+bool Number::is_int() const {
+    return Type::INT == m_type;
+}
+
+bool Number::is_uint() const {
+    return Type::UINT == m_type;
+}
+
+bool Number::is_double() const {
+    return Type::DOUBLE == m_type;
+}
+
 bool json::operator==(const Number& num1, const Number& num2) {
     bool result = false;
 
@@ -358,6 +374,14 @@ Value& Value::operator=(std::initializer_list<Value> init_list) {
     return *this;
 }
 
+void Value::assign(std::initializer_list<Pair> init_list) {
+    *this = init_list;
+}
+
+void Value::assign(std::initializer_list<Value> init_list) {
+    *this = init_list;
+}
+
 void Value::assign(size_t count, const Value& value) {
     this->~Value();
     create_container(Type::ARRAY);
@@ -415,9 +439,38 @@ void Value::clear() {
     }
 }
 
+Value& Value::operator[](int index) {
+    return (*this)[size_t(index)];
+}
+
+const Value& Value::operator[](int index) const {
+    return (*this)[size_t(index)];
+}
+
+Value& Value::operator[](const String& key) {
+    return (*this)[key.c_str()];
+}
+
+const Value& Value::operator[](const String& key) const {
+    return (*this)[key.c_str()];
+}
+
+Value::Type Value::type() const {
+    return m_type;
+}
+
+bool Value::is_member(const std::string& key) const {
+    return is_member(key.c_str());
+}
+
 bool Value::is_member(const char* key) const {
     if (!is_object()) { return false; }
     return (std::cref((*this)[key]) != g_null_value);
+}
+
+
+bool Value::empty() const {
+    return !size();
 }
 
 size_t Value::erase(const char* key) {
@@ -431,6 +484,103 @@ size_t Value::erase(const char* key) {
     }
 
     return 0;
+}
+
+
+size_t Value::erase(const String& key) {
+    return erase(key.c_str());
+}
+
+bool Value::is_string() const {
+    return Type::STRING == m_type;
+}
+
+bool Value::is_object() const {
+    return Type::OBJECT == m_type;
+}
+
+bool Value::is_array() const {
+    return Type::ARRAY == m_type;
+}
+
+bool Value::is_number() const {
+    return Type::NUMBER == m_type;
+}
+
+bool Value::is_boolean() const {
+    return Type::BOOLEAN == m_type;
+}
+
+bool Value::is_null() const {
+    return Type::NIL == m_type;
+}
+
+bool Value::is_int() const {
+    return is_number() ? Number(m_number).is_int() : false;
+}
+
+bool Value::is_uint() const {
+    return is_number() ? Number(m_number).is_uint() : false;
+}
+
+bool Value::is_double() const {
+    return is_number() ? Number(m_number).is_double() : false;
+}
+
+Value::operator String&() {
+    return m_string;
+}
+
+Value::operator const String&() const {
+    return m_string;
+}
+
+Value::operator const char*() const {
+    return m_string.c_str();
+}
+
+Value::operator Bool() const {
+    return m_boolean;
+}
+
+Value::operator Null() const {
+    return nullptr;
+}
+
+Value::operator Int() const {
+    return Int(m_number);
+}
+
+Value::operator Uint() const {
+    return Uint(m_number);
+}
+
+Value::operator Double() const {
+    return Double(m_number);
+}
+
+Value::operator Array&() {
+    return m_array;
+}
+
+Value::operator Number&() {
+    return m_number;
+}
+
+Value::operator const Array&() const {
+    return m_array;
+}
+
+Value::operator const Object&() const {
+    return m_object;
+}
+
+Value::operator const Number&() const {
+    return m_number;
+}
+
+bool Value::operator!() const {
+    return is_null();
 }
 
 Value& Value::Value::operator[](const char* key) {
@@ -567,6 +717,10 @@ bool json::operator==(const Value& val1, const Value& val2) {
     return result;
 }
 
+bool json::operator!=(const Value& val1, const Value& val2) {
+    return !(val1 == val2);
+}
+
 Value::iterator Value::begin() {
     if (is_object()) {
         return m_object.begin();
@@ -601,6 +755,14 @@ Value::const_iterator Value::cbegin() const {
     }
 
     return const_iterator();
+}
+
+Value::const_iterator Value::begin() const {
+    return std::move(cbegin());
+}
+
+Value::const_iterator Value::end() const {
+    return std::move(cend());
 }
 
 Value::const_iterator Value::cend() const {
@@ -646,6 +808,11 @@ bool json::operator==(const Value::BaseIterator& it1,
     }
 
     return false;
+}
+
+bool json::operator!=(const Value::BaseIterator& it1,
+        const Value::BaseIterator& it2) {
+    return !(it1 == it2);
 }
 
 void Value::BaseIterator::increment() {
@@ -694,6 +861,14 @@ const Value& Value::BaseIterator::const_deref() const {
     return *m_array_const_iterator;
 }
 
+bool Value::BaseIterator::is_array() const {
+    return Value::Type::ARRAY == m_type;
+}
+
+bool Value::BaseIterator::is_object() const {
+    return Value::Type::OBJECT == m_type;
+}
+
 Value::iterator::iterator() : BaseIterator(Array::iterator{}) { }
 
 Value::iterator::iterator(const Array::iterator& it) : BaseIterator(it) { }
@@ -709,6 +884,14 @@ Value::iterator Value::iterator::operator++(int) {
     iterator temp(*this);
     increment();
     return temp;
+}
+
+Value::iterator::reference Value::iterator::operator*() {
+    return deref();
+}
+
+Value::iterator::pointer Value::iterator::operator->() {
+    return &deref();
 }
 
 Value::const_iterator::const_iterator() : BaseIterator(Array::iterator{}) { }
@@ -728,4 +911,12 @@ const Value::const_iterator Value::const_iterator::operator++(int) {
     const_iterator temp(*this);
     const_increment();
     return temp;
+}
+
+Value::const_iterator::reference Value::const_iterator::operator*() const {
+    return const_deref();
+}
+
+Value::const_iterator::pointer Value::const_iterator::operator->() const {
+    return &const_deref();
 }
