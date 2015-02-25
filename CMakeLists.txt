@@ -58,7 +58,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
         -Wextra
         -Wpedantic
         -fno-rtti
-        -fno-exceptions
+        #-fno-exceptions
         ${CMAKE_CXX_FLAGS}
     )
     set(CMAKE_EXE_LINKER_FLAGS -Wl,--gc-sections)
@@ -70,5 +70,5 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-#add_subdirectory(src)
+add_subdirectory(src)
 add_subdirectory(json)

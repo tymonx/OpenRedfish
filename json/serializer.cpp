@@ -45,8 +45,8 @@
 
 using namespace json;
 
-constexpr size_t Serializer::DEFAULT_INDENT = 4;
-constexpr Serializer::Mode Serializer::DEFAULT_MODE = Serializer::Mode::COMPACT;
+const size_t Serializer::DEFAULT_INDENT = 4;
+const Serializer::Mode Serializer::DEFAULT_MODE = Serializer::Mode::COMPACT;
 
 static constexpr char JSON_NULL[] = "null";
 static constexpr char JSON_TRUE[] = "true";
