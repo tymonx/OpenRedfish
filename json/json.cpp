@@ -46,6 +46,7 @@
 #include <cmath>
 #include <limits>
 #include <type_traits>
+#include <functional>
 
 using namespace json;
 
@@ -426,6 +427,15 @@ void Value::clear() {
     }
 }
 
+bool Value::is_member(const char* key) const {
+    if (!is_object()) { return false; }
+    return (std::cref((*this)[key]) != g_null_value);
+}
+
+bool Value::is_member(const std::string& key) const {
+    return is_member(key.c_str());
+}
+
 size_t Value::erase(const String& key) {
     if (!is_object()) { return 0; }
 
@@ -509,7 +519,7 @@ void Value::push_back(const Pair& pair) {
     if (is_null()) { *this = Type::OBJECT; }
 
     if (is_object()) {
-        operator[](pair.first) = pair.second;
+        (*this)[pair.first] = pair.second;
         return;
     }
 

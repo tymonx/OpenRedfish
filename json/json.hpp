@@ -192,6 +192,10 @@ public:
 
     Type type() const { return m_type; }
 
+    bool is_member(const char* key) const;
+
+    bool is_member(const std::string& key) const;
+
     bool is_string() const { return Type::STRING == m_type; }
 
     bool is_object() const { return Type::OBJECT == m_type; }

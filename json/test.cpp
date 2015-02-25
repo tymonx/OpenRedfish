@@ -122,8 +122,10 @@ int main(void) {
     const json::Value& test1 = val6;
     const json::Value& test2 = val5;
 
-    cout << "Test1: " << (test1["test1"] == nullptr) << endl;
-    cout << "Test2: " << (test2["test2"] == nullptr) << endl;
+    cout << "Test1: " << (test1["test1"] != nullptr) << endl;
+    cout << "Test2: " << (test2["test2"] != nullptr) << endl;
+    cout << "Test3: " << (test1.is_member("test1")) << endl;
+    cout << "Test4: " << (test2.is_member("test2")) << endl;
 
     json::Deserializer deserializer(R"({"key1":true, "key3": 
         
