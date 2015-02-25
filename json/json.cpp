@@ -150,10 +150,6 @@ bool json::operator==(const Number& num1, const Number& num2) {
     return result;
 }
 
-bool json::operator!=(const Number& num1, const Number& num2) {
-    return !(num1 == num2);
-}
-
 Value::Value(Type type) : m_type(type) {
     create_container(m_type);
 }
@@ -174,6 +170,10 @@ Value::Value(const String& str) : m_type(Type::STRING) {
 
 Value::Value(const Pair& pair) : m_type(Type::OBJECT) {
     new (&m_object) Object{pair};
+}
+
+Value::Value(const char* key, const Value& value) : m_type(Type::OBJECT) {
+    new (&m_object) Object{std::make_pair(key, value)};
 }
 
 Value::Value(const String& key, const Value& value) : m_type(Type::OBJECT) {
@@ -364,14 +364,6 @@ void Value::assign(size_t count, const Value& value) {
     new (&m_array) Array(count, value);
 }
 
-void Value::assign(std::initializer_list<Pair> init_list) {
-    operator=(init_list);
-}
-
-void Value::assign(std::initializer_list<Value> init_list) {
-    operator=(init_list);
-}
-
 size_t Value::size() const {
     size_t size = 0;
 
@@ -398,10 +390,6 @@ size_t Value::size() const {
     }
 
     return size;
-}
-
-bool Value::empty() const {
-    return !size();
 }
 
 void Value::clear() {
@@ -432,11 +420,7 @@ bool Value::is_member(const char* key) const {
     return (std::cref((*this)[key]) != g_null_value);
 }
 
-bool Value::is_member(const std::string& key) const {
-    return is_member(key.c_str());
-}
-
-size_t Value::erase(const String& key) {
+size_t Value::erase(const char* key) {
     if (!is_object()) { return 0; }
 
     for (auto it = m_object.begin(); it != m_object.end(); it++) {
@@ -449,7 +433,7 @@ size_t Value::erase(const String& key) {
     return 0;
 }
 
-Value& Value::Value::operator[](const String& key) {
+Value& Value::Value::operator[](const char* key) {
     if (!is_object()) {
         if (is_null()) { *this = Type::OBJECT; }
         else { return *this; }
@@ -466,7 +450,7 @@ Value& Value::Value::operator[](const String& key) {
     return m_object.back().second;
 }
 
-const Value& Value::Value::operator[](const String& key) const {
+const Value& Value::Value::operator[](const char* key) const {
     if (!is_object()) { return *this; }
 
     for (const auto& pair : m_object) {
@@ -478,7 +462,7 @@ const Value& Value::Value::operator[](const String& key) const {
     return g_null_value;
 }
 
-Value& Value::Value::operator[](size_t index) {
+Value& Value::Value::operator[](const size_t index) {
     if (is_null()) { *this = Type::ARRAY; }
 
     if (is_array()) {
@@ -495,7 +479,7 @@ Value& Value::Value::operator[](size_t index) {
     return *this;
 }
 
-const Value& Value::Value::operator[](size_t index) const {
+const Value& Value::Value::operator[](const size_t index) const {
     if (is_array()) {
         return m_array[index];
     }
@@ -583,11 +567,7 @@ bool json::operator==(const Value& val1, const Value& val2) {
     return result;
 }
 
-bool json::operator!=(const Value& val1, const Value& val2) {
-    return !(val1 == val2);
-}
-
-Value::Iterator Value::begin() {
+Value::iterator Value::begin() {
     if (is_object()) {
         return m_object.begin();
     }
@@ -596,10 +576,10 @@ Value::Iterator Value::begin() {
         return m_array.begin();
     }
 
-    return Iterator();
+    return iterator();
 }
 
-Value::Iterator Value::end() {
+Value::iterator Value::end() {
     if (is_object()) {
         return m_object.end();
     }
@@ -608,18 +588,10 @@ Value::Iterator Value::end() {
         return m_array.end();
     }
 
-    return Iterator();
+    return iterator();
 }
 
-Value::ConstIterator Value::begin() const {
-    return std::move(cbegin());
-}
-
-Value::ConstIterator Value::end() const {
-    return std::move(cend());
-}
-
-Value::ConstIterator Value::cbegin() const {
+Value::const_iterator Value::cbegin() const {
     if (is_object()) {
         return m_object.cbegin();
     }
@@ -628,10 +600,10 @@ Value::ConstIterator Value::cbegin() const {
         return m_array.cbegin();
     }
 
-    return ConstIterator();
+    return const_iterator();
 }
 
-Value::ConstIterator Value::cend() const {
+Value::const_iterator Value::cend() const {
     if (is_object()) {
         return m_object.cend();
     }
@@ -640,7 +612,7 @@ Value::ConstIterator Value::cend() const {
         return m_array.cend();
     }
 
-    return ConstIterator();
+    return const_iterator();
 }
 
 Value::BaseIterator::BaseIterator(const Array::iterator& it) :
@@ -675,9 +647,6 @@ bool json::operator==(const Value::BaseIterator& it1,
 
     return false;
 }
-
-bool json::operator!=(const Value::BaseIterator& it1,
-        const Value::BaseIterator& it2) { return !(it1 == it2); }
 
 void Value::BaseIterator::increment() {
     if (is_object()) {
@@ -725,38 +694,38 @@ const Value& Value::BaseIterator::const_deref() const {
     return *m_array_const_iterator;
 }
 
-Value::Iterator::Iterator() : BaseIterator(Array::iterator{}) { }
+Value::iterator::iterator() : BaseIterator(Array::iterator{}) { }
 
-Value::Iterator::Iterator(const Array::iterator& it) : BaseIterator(it) { }
+Value::iterator::iterator(const Array::iterator& it) : BaseIterator(it) { }
 
-Value::Iterator::Iterator(const Object::iterator& it) : BaseIterator(it) { }
+Value::iterator::iterator(const Object::iterator& it) : BaseIterator(it) { }
 
-Value::Iterator& Value::Iterator::operator++() {
+Value::iterator& Value::iterator::operator++() {
     increment();
     return *this;
 }
 
-Value::Iterator Value::Iterator::operator++(int) {
-    Iterator temp(*this);
+Value::iterator Value::iterator::operator++(int) {
+    iterator temp(*this);
     increment();
     return temp;
 }
 
-Value::ConstIterator::ConstIterator() : BaseIterator(Array::iterator{}) { }
+Value::const_iterator::const_iterator() : BaseIterator(Array::iterator{}) { }
 
-Value::ConstIterator::ConstIterator(const Array::const_iterator& it) :
+Value::const_iterator::const_iterator(const Array::const_iterator& it) :
     BaseIterator(it) { }
 
-Value::ConstIterator::ConstIterator(const Object::const_iterator& it) :
+Value::const_iterator::const_iterator(const Object::const_iterator& it) :
     BaseIterator(it) { }
 
-const Value::ConstIterator& Value::ConstIterator::operator++() {
+const Value::const_iterator& Value::const_iterator::operator++() {
     const_increment();
     return *this;
 }
 
-const Value::ConstIterator Value::ConstIterator::operator++(int) {
-    ConstIterator temp(*this);
+const Value::const_iterator Value::const_iterator::operator++(int) {
+    const_iterator temp(*this);
     const_increment();
     return temp;
 }

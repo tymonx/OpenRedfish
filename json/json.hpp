@@ -130,6 +130,8 @@ public:
 
     Value(const Pair& pair);
 
+    Value(const char* key, const Value& value);
+
     Value(const String& key, const Value& value);
 
     Value(Uint value);
@@ -162,9 +164,9 @@ public:
 
     void assign(size_t count, const Value& value);
 
-    void assign(std::initializer_list<Pair> init_list);
+    void assign(std::initializer_list<Pair> init_list) { *this = init_list; }
 
-    void assign(std::initializer_list<Value> init_list);
+    void assign(std::initializer_list<Value> init_list) { *this = init_list; }
 
     void push_back(const Pair& pair);
 
@@ -176,25 +178,45 @@ public:
 
     void clear();
 
-    bool empty() const;
+    bool empty() const { return !size(); }
 
-    size_t erase(const String& key);
+    size_t erase(const String& key) { return erase(key.c_str()); }
+
+    size_t erase(const char* key);
 
     void swap(Value& value);
-
-    Value& operator[](const String& key);
-
-    const Value& operator[](const String& key) const;
 
     Value& operator[](size_t index);
 
     const Value& operator[](size_t index) const;
 
+    Value& operator[](int index) {
+        return (*this)[size_t(index)];
+    }
+
+    const Value& operator[](int index) const {
+        return (*this)[size_t(index)];
+    }
+
+    Value& operator[](const char* key);
+
+    const Value& operator[](const char* key) const;
+
+    Value& operator[](const String& key) {
+        return (*this)[key.c_str()];
+    }
+
+    const Value& operator[](const String& key) const {
+        return (*this)[key.c_str()];
+    }
+
     Type type() const { return m_type; }
 
-    bool is_member(const char* key) const;
+    bool is_member(const std::string& key) const {
+        return is_member(key.c_str());
+    }
 
-    bool is_member(const std::string& key) const;
+    bool is_member(const char* key) const;
 
     bool is_string() const { return Type::STRING == m_type; }
 
@@ -248,17 +270,20 @@ public:
 
     bool operator!() const { return is_null(); }
 
-    friend bool operator==(const Value& val1, const Value& val2);
+    friend bool operator!=(const Value& val1, const Value& val2) {
+        return !(val1 == val2);
+    }
 
-    friend bool operator!=(const Value& val1, const Value& val2);
+    friend bool operator==(const Value& val1, const Value& val2);
 
     class BaseIterator {
     public:
+        friend bool operator!=(const Value::BaseIterator& it1,
+            const BaseIterator& it2) { return !(it1 == it2); }
+
         friend bool operator==(const BaseIterator& it1,
                 const BaseIterator& it2);
 
-        friend bool operator!=(const BaseIterator& it1,
-                const BaseIterator& it2);
     protected:
         BaseIterator(const Array::iterator& it);
 
@@ -294,55 +319,55 @@ public:
         };
     };
 
-    class Iterator :
+    class iterator :
         public BaseIterator,
         public std::iterator<std::forward_iterator_tag, Value> {
     public:
-        Iterator();
+        iterator();
 
-        Iterator(const Array::iterator& it);
+        iterator(const Array::iterator& it);
 
-        Iterator(const Object::iterator& it);
+        iterator(const Object::iterator& it);
 
-        Iterator& operator++();
+        iterator& operator++();
 
-        Iterator operator++(int);
+        iterator operator++(int);
 
         reference operator*() { return deref(); }
 
         pointer operator->() { return &deref(); }
     };
 
-    class ConstIterator :
+    class const_iterator :
         public BaseIterator,
         public std::iterator<std::forward_iterator_tag, const Value> {
     public:
-        ConstIterator();
+        const_iterator();
 
-        ConstIterator(const Array::const_iterator& it);
+        const_iterator(const Array::const_iterator& it);
 
-        ConstIterator(const Object::const_iterator& it);
+        const_iterator(const Object::const_iterator& it);
 
-        const ConstIterator& operator++();
+        const const_iterator& operator++();
 
-        const ConstIterator operator++(int);
+        const const_iterator operator++(int);
 
         reference operator*() const { return const_deref(); }
 
         pointer operator->() const { return &const_deref(); }
     };
 
-    Iterator begin();
+    iterator begin();
 
-    Iterator end();
+    iterator end();
 
-    ConstIterator begin() const;
+    const_iterator begin() const { return std::move(cbegin()); }
 
-    ConstIterator end() const;
+    const_iterator end() const { return std::move(cend()); }
 
-    ConstIterator cbegin() const;
+    const_iterator cbegin() const;
 
-    ConstIterator cend() const;
+    const_iterator cend() const;
 
 private:
     enum Type m_type;
