@@ -55,8 +55,8 @@ public:
         PRETTY
     };
 
-    static constexpr size_t DEFAULT_INDENT = 4;
-    static constexpr Mode DEFAULT_MODE = Mode::COMPACT;
+    static const size_t DEFAULT_INDENT;
+    static const Mode DEFAULT_MODE;
 
     Serializer(Mode mode = DEFAULT_MODE);
 
@@ -65,14 +65,14 @@ public:
     Serializer& operator<<(const Value& value);
 
     void set_mode(Mode mode);
-    void enable_newline(bool enable = true) { m_enable_newline = enable; }
-    void set_indent(size_t indent) { m_indent = indent; }
+    void enable_newline(bool enable = true);
+    void set_indent(size_t indent);
 private:
-    size_t m_level = 0;
-    size_t m_indent = DEFAULT_INDENT;
-    bool m_enable_newline = false;
-    size_t m_colon_start = 1;
-    size_t m_colon_stop = 1;
+    size_t m_level;
+    size_t m_indent;
+    bool m_enable_newline;
+    size_t m_colon_start;
+    size_t m_colon_stop;
 
     void write_object(const Value& value);
     void write_value(const Value& value);
@@ -83,10 +83,7 @@ private:
     void write_empty(const Value& value);
 };
 
-inline std::ostream& operator<<(std::ostream& os,
-        const Serializer& serializer) {
-    return os << serializer.c_str();
-}
+std::ostream& operator<<(std::ostream& os, const Serializer& serializer);
 
 }
 

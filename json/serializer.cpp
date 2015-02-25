@@ -45,16 +45,19 @@
 
 using namespace json;
 
+constexpr size_t Serializer::DEFAULT_INDENT = 4;
+constexpr Serializer::Mode Serializer::DEFAULT_MODE = Serializer::Mode::COMPACT;
+
 static constexpr char JSON_NULL[] = "null";
 static constexpr char JSON_TRUE[] = "true";
 static constexpr char JSON_FALSE[] = "false";
 static constexpr char NEWLINE[] = "\n";
 
-Serializer::Serializer(Mode mode) {
+Serializer::Serializer(Mode mode) : m_level(0) {
     set_mode(mode);
 }
 
-Serializer::Serializer(const Value& value, Mode mode) {
+Serializer::Serializer(const Value& value, Mode mode) : m_level(0) {
     set_mode(mode);
     operator<<(value);
 }
@@ -67,6 +70,11 @@ Serializer& Serializer::operator<<(const Value& value) {
     }
 
     return *this;
+}
+
+std::ostream& json::operator<<(std::ostream& os,
+        const Serializer& serializer) {
+    return os << serializer.c_str();
 }
 
 void Serializer::set_mode(Mode mode) {
@@ -86,6 +94,14 @@ void Serializer::set_mode(Mode mode) {
     default:
         break;
     }
+}
+
+void Serializer::enable_newline(bool enable) {
+    m_enable_newline = enable;
+}
+
+void Serializer::set_indent(size_t indent) {
+    m_indent = indent;
 }
 
 void Serializer::write_object(const Value& value) {
