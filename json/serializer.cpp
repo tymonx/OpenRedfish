@@ -91,6 +91,10 @@ std::ostream& json::operator<<(std::ostream& os,
     return os << serializer.m_serialized;
 }
 
+String& json::operator<<(String& str, const Serializer& serializer) {
+    return str += serializer.m_serialized;
+}
+
 void Serializer::set_mode(Mode mode) {
     switch (mode) {
     case Mode::COMPACT:

@@ -58,7 +58,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
         -Wextra
         -Wpedantic
         -fno-rtti
-        #-fno-exceptions
         ${CMAKE_CXX_FLAGS}
     )
     set(CMAKE_EXE_LINKER_FLAGS -Wl,--gc-sections)

@@ -40,8 +40,14 @@ add_library(jsonc++ STATIC
 add_executable(json_test ${SOURCES})
 target_link_libraries(json_test jsonc++)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
+    set_target_properties(jsonc++ PROPERTIES
+        COMPILE_FLAGS "-fno-exceptions -fno-rtti"
+    )
+endif()
+
 if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
     set_target_properties(jsonc++ PROPERTIES
-        COMPILE_FLAGS "-Wno-global-constructors"
+        COMPILE_FLAGS "-Wno-global-constructors -fno-exceptions -fno-rtti"
     )
 endif()

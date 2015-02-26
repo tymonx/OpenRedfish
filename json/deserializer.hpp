@@ -53,12 +53,18 @@ public:
     Deserializer();
     Deserializer(const char* str);
     Deserializer(const String& str);
+    Deserializer(const Deserializer&) = default;
+    Deserializer(Deserializer&&) = default;
 
+    Deserializer& operator<<(const char* str);
     Deserializer& operator<<(const String& str);
     Deserializer& operator>>(Value& value);
 
-    Deserializer(const Deserializer&) = default;
     Deserializer& operator=(const Deserializer&) = default;
+    Deserializer& operator=(Deserializer&&) = default;
+
+    friend Deserializer operator>>(const char* str, Value& val);
+    friend Deserializer operator>>(const String& str, Value& val);
 
     void set_limit(size_t limit = MAX_LIMIT_PER_OBJECT);
 
@@ -149,6 +155,9 @@ private:
     void clear_error();
     void set_error(Error::Code error_code);
 };
+
+Deserializer operator>>(const char* str, Value& val);
+Deserializer operator>>(const String& str, Value& val);
 
 }
 

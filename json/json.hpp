@@ -79,17 +79,13 @@ public:
 
     Number(Double value);
 
+    Number& operator+=(const Number& number);
+
     explicit operator Int() const;
 
     explicit operator Uint() const;
 
     explicit operator Double() const;
-
-    friend bool operator==(const Number& num1, const Number& num2);
-
-    friend bool operator!=(const Number& num1, const Number& num2);
-
-    Type get_type() const;
 
     bool is_int() const;
 
@@ -97,6 +93,11 @@ public:
 
     bool is_double() const;
 
+    Type get_type() const;
+
+    friend bool operator==(const Number& num1, const Number& num2);
+
+    friend bool operator!=(const Number& num1, const Number& num2);
 private:
     enum Type m_type;
 
@@ -161,6 +162,8 @@ public:
     Value& operator=(std::initializer_list<Pair> init_list);
 
     Value& operator=(std::initializer_list<Value> init_list);
+
+    Value& operator+=(const Value& value);
 
     void assign(size_t count, const Value& value);
 
@@ -254,9 +257,12 @@ public:
 
     bool operator!() const;
 
-    friend bool operator==(const Value& val1, const Value& val2);
-
-    friend bool operator!=(const Value& val1, const Value& val2);
+    friend bool operator==(const Value&, const Value&);
+    friend bool operator!=(const Value&, const Value&);
+    friend bool operator<(const Value&, const Value&);
+    friend bool operator>(const Value&, const Value&);
+    friend bool operator<=(const Value&, const Value&);
+    friend bool operator>=(const Value&, const Value&);
 
     class iterator {
     public:
@@ -265,6 +271,7 @@ public:
         using value_type = Value;
         using reference = Value&;
         using pointer = Value*;
+        using size_type = std::size_t;
 
         iterator();
 
@@ -274,6 +281,8 @@ public:
 
         iterator(const Object::iterator& it);
 
+        const char* key() const;
+
         iterator& operator++();
 
         iterator operator++(int);
@@ -282,11 +291,26 @@ public:
 
         pointer operator->();
 
-        const char* key() const;
+        friend bool operator<(const iterator&, const iterator&);
+        friend bool operator>(const iterator&, const iterator&);
+        friend bool operator<=(const iterator&, const iterator&);
+        friend bool operator>=(const iterator&, const iterator&);
 
-        friend bool operator==(const iterator& it1, const iterator& it2);
+        iterator& operator+=(size_type);
+        iterator& operator-=(size_type);
 
-        friend bool operator!=(const iterator& it1, const iterator& it2);
+        friend iterator operator+(const iterator&, size_type);
+        friend iterator operator+(size_type, const iterator&);
+
+        friend iterator operator-(const iterator&, size_type);
+        friend difference_type operator-(iterator, iterator);
+
+        reference operator[](size_type);
+
+        friend void swap(iterator&, iterator&);
+
+        friend bool operator==(const iterator&, const iterator&);
+        friend bool operator!=(const iterator&, const iterator&);
     private:
         Value::Type m_type;
 
@@ -313,6 +337,8 @@ public:
 
         const_iterator(const Object::const_iterator& it);
 
+        const char* key() const;
+
         const_iterator& operator++();
 
         const_iterator operator++(int);
@@ -321,13 +347,29 @@ public:
 
         pointer operator->() const;
 
-        const char* key() const;
+        friend bool operator==(const const_iterator&, const const_iterator&);
+        friend bool operator!=(const const_iterator&, const const_iterator&);
 
-        friend bool operator==(const const_iterator& it1,
-                const const_iterator& it2);
+        /*
+        friend bool operator<(const iterator&, const iterator&);
+        friend bool operator>(const iterator&, const iterator&);
+        friend bool operator<=(const iterator&, const iterator&);
+        friend bool operator>=(const iterator&, const iterator&);
 
-        friend bool operator!=(const const_iterator& it1,
-                const const_iterator& it2);
+        iterator& operator+=(size_type);
+        iterator& operator-=(size_type);
+
+        friend iterator operator+(const iterator&, size_type);
+        friend iterator operator+(size_type, const iterator&);
+
+        friend iterator operator-(const iterator&, size_type);
+        friend difference_type operator-(iterator, iterator);
+
+        reference operator[](size_type);
+
+        friend void swap(iterator&, iterator&);
+
+        */
     private:
         Value::Type m_type;
 
@@ -364,19 +406,30 @@ private:
     void create_container(Type type);
 };
 
-bool operator==(const Value& val1, const Value& val2);
+bool operator==(const Value::iterator&, const Value::iterator&);
+bool operator!=(const Value::iterator&, const Value::iterator&);
+bool operator<(const Value::iterator&, const Value::iterator&);
+bool operator>(const Value::iterator&, const Value::iterator&);
+bool operator<=(const Value::iterator&, const Value::iterator&);
+bool operator>=(const Value::iterator&, const Value::iterator&);
 
-bool operator!=(const Value& val1, const Value& val2);
+Value::iterator operator+(const Value::iterator&, Value::iterator::size_type);
+Value::iterator operator+(Value::iterator::size_type, const Value::iterator&);
 
-bool operator==(const Value::iterator& it1, const Value::iterator& it2);
+Value::iterator operator-(const Value::iterator&, Value::iterator::size_type);
+Value::iterator::difference_type operator-(Value::iterator, Value::iterator);
 
-bool operator!=(const Value::iterator& it1, const Value::iterator& it2);
+void swap(Value::iterator&, Value::iterator&);
 
-bool operator==(const Value::const_iterator& it1,
-        const Value::const_iterator& it2);
+bool operator==(const Value::const_iterator&, const Value::const_iterator&);
+bool operator!=(const Value::const_iterator&, const Value::const_iterator&);
 
-bool operator!=(const Value::const_iterator& it1,
-        const Value::const_iterator& it2);
+bool operator==(const Value&, const Value&);
+bool operator!=(const Value&, const Value&);
+bool operator<(const Value&, const Value&);
+bool operator>(const Value&, const Value&);
+bool operator<=(const Value&, const Value&);
+bool operator>=(const Value&, const Value&);
 
 } /* namespace json */
 

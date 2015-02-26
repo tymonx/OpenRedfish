@@ -154,6 +154,24 @@ bool Number::is_double() const {
     return Type::DOUBLE == m_type;
 }
 
+Number& Number::operator+=(const Number& number) {
+    switch (m_type) {
+    case Type::INT:
+        m_int += Int(number);
+        break;
+    case Type::UINT:
+        m_uint += Uint(number);
+        break;
+    case Type::DOUBLE:
+        m_double += Double(number);
+        break;
+    default:
+        break;
+    }
+
+    return *this;
+}
+
 bool json::operator==(const Number& num1, const Number& num2) {
     bool result = false;
 
@@ -380,6 +398,49 @@ Value& Value::operator=(std::initializer_list<Value> init_list) {
     create_container(Type::ARRAY);
 
     m_array = init_list;
+
+    return *this;
+}
+
+Value& Value::operator+=(const Value& value) {
+    switch (m_type) {
+    case Type::OBJECT:
+        if (value.is_object()) {
+            for (auto it = value.cbegin(); value.cend() != it; ++it) {
+                (*this)[it.key()] = *it;
+            }
+        }
+        break;
+    case Type::ARRAY:
+        if (value.is_array()) {
+            m_array.insert(m_array.end(),
+                    value.m_array.begin(),
+                    value.m_array.end());
+        } else if (value.is_object()) {
+             m_array.insert(m_array.end(),
+                    value.m_object.begin(),
+                    value.m_object.end());
+        } else {
+            m_array.push_back(value);
+        }
+        break;
+    case Type::STRING:
+        if (value.is_string()) {
+            m_string += value.m_string;
+        }
+        break;
+    case Type::NUMBER:
+        if (value.is_number()) {
+            m_number += value.m_number;
+        }
+        break;
+    case Type::NIL:
+        *this = value;
+        break;
+    case Type::BOOLEAN:
+    default:
+        break;
+    }
 
     return *this;
 }
@@ -727,6 +788,50 @@ bool json::operator!=(const Value& val1, const Value& val2) {
     return !(val1 == val2);
 }
 
+bool json::operator<(const Value& val1, const Value& val2) {
+    if (val1.m_type != val2.m_type) {
+        return false;
+    }
+
+    bool result = false;
+
+    switch (val1.m_type) {
+    case Value::Type::OBJECT:
+        result = (val1.m_object < val2.m_object);
+        break;
+    case Value::Type::ARRAY:
+        result = (val1.m_array < val2.m_array);
+        break;
+    case Value::Type::STRING:
+        result = (val1.m_string < val2.m_string);
+        break;
+    case Value::Type::NUMBER:
+        result = (val1.m_number < val2.m_number);
+        break;
+    case Value::Type::BOOLEAN:
+        result = (val1.m_boolean < val2.m_boolean);
+        break;
+    case Value::Type::NIL:
+    default:
+        result = false;
+        break;
+    }
+
+    return result;
+}
+
+bool json::operator>(const Value& val1, const Value& val2) {
+    return val2 < val1;
+}
+
+bool json::operator<=(const Value& val1, const Value& val2) {
+    return !(val2 < val1);
+}
+
+bool json::operator>=(const Value& val1, const Value& val2) {
+    return !(val1 < val2);
+}
+
 Value::iterator Value::begin() {
     if (is_array()) { return m_array.begin(); }
     if (is_object()) { return m_object.begin(); }
@@ -823,11 +928,9 @@ bool json::operator==(const Value::iterator& it1, const Value::iterator& it2) {
 
     if (Value::Type::ARRAY == it1.m_type) {
         result = (it1.m_array_iterator == it2.m_array_iterator);
-    }
-    else if (Value::Type::OBJECT == it1.m_type) {
+    } else if (Value::Type::OBJECT == it1.m_type) {
         result = (it1.m_object_iterator == it2.m_object_iterator);
-    }
-    else {
+    } else {
         result = (it1.m_value_iterator == it2.m_value_iterator);
     }
 
@@ -836,6 +939,139 @@ bool json::operator==(const Value::iterator& it1, const Value::iterator& it2) {
 
 bool json::operator!=(const Value::iterator& it1, const Value::iterator& it2) {
     return !(it1 == it2);
+}
+
+bool json::operator<(const Value::iterator& it1, const Value::iterator& it2) {
+    if (it1.m_type != it2.m_type) { return false; }
+
+    bool result;
+
+    if (Value::Type::ARRAY == it1.m_type) {
+        result = (it1.m_array_iterator < it2.m_array_iterator);
+    } else if (Value::Type::OBJECT == it1.m_type) {
+        result = (it1.m_object_iterator < it2.m_object_iterator);
+    } else {
+        result = (it1.m_value_iterator < it2.m_value_iterator);
+    }
+
+    return result;
+}
+
+bool json::operator>(const Value::iterator& it1, const Value::iterator& it2) {
+    return it2 < it1;
+}
+
+bool json::operator<=(const Value::iterator& it1, const Value::iterator& it2) {
+    return !(it2 < it1);
+}
+
+bool json::operator>=(const Value::iterator& it1, const Value::iterator& it2) {
+    return !(it1 < it2);
+}
+
+Value::iterator& Value::iterator::operator+=(size_type n) {
+    if (Value::Type::ARRAY == m_type) {
+        m_array_iterator += Array::difference_type(n);
+    } else if (Value::Type::OBJECT == m_type) {
+        m_object_iterator += Object::difference_type(n);
+    } else {
+        m_value_iterator += n;
+    }
+
+    return *this;
+}
+
+Value::iterator& Value::iterator::operator-=(size_type n) {
+    if (Value::Type::ARRAY == m_type) {
+        m_array_iterator -= Array::difference_type(n);
+    } else if (Value::Type::OBJECT == m_type) {
+        m_object_iterator -= Object::difference_type(n);
+    } else {
+        m_value_iterator -= n;
+    }
+
+    return *this;
+}
+
+Value::iterator json::operator+(const Value::iterator& it,
+        Value::iterator::size_type n) {
+    Value::iterator tmp;
+
+    if (Value::Type::ARRAY == it.m_type) {
+        tmp = std::move(it.m_array_iterator + Array::difference_type(n));
+    } else if (Value::Type::OBJECT == it.m_type) {
+        tmp = std::move(it.m_object_iterator + Object::difference_type(n));
+    } else {
+        tmp = *(it.m_value_iterator + n);
+    }
+
+    return tmp;
+}
+
+Value::iterator json::operator+(Value::iterator::size_type n,
+        const Value::iterator& it) {
+    return it + n;
+}
+
+Value::iterator json::operator-(const Value::iterator& it,
+        Value::iterator::size_type n) {
+    Value::iterator tmp;
+
+    if (Value::Type::ARRAY == it.m_type) {
+        tmp = std::move(it.m_array_iterator - Array::difference_type(n));
+    } else if (Value::Type::OBJECT == it.m_type) {
+        tmp = std::move(it.m_object_iterator - Object::difference_type(n));
+    } else {
+        tmp = *(it.m_value_iterator - n);
+    }
+
+    return tmp;
+}
+
+
+Value::iterator::difference_type json::operator-(Value::iterator it1,
+        Value::iterator it2) {
+    if (it1.m_type != it2.m_type) { return 0; }
+
+    Value::iterator::difference_type tmp;
+
+    if (Value::Type::ARRAY == it1.m_type) {
+        tmp = std::move(it2.m_array_iterator - it1.m_array_iterator);
+    } else if (Value::Type::OBJECT == it1.m_type) {
+        tmp = std::move(it2.m_object_iterator - it1.m_object_iterator);
+    } else {
+        tmp = std::move(it2.m_value_iterator -it1.m_value_iterator);
+    }
+
+    return tmp;
+}
+
+Value::iterator::reference Value::iterator::operator[](size_type n) {
+    Value::iterator::pointer ptr;
+
+    if (Value::Type::ARRAY == m_type) {
+        ptr = &m_array_iterator[difference_type(n)];
+    } else if (Value::Type::OBJECT == m_type) {
+        ptr = &m_object_iterator[difference_type(n)].second;
+    } else {
+        ptr = &m_value_iterator[n];
+    }
+
+    return *ptr;
+}
+
+void json::swap(Value::iterator& it1, Value::iterator& it2) {
+    if (it1.m_type != it2.m_type) { return; }
+
+    if (Value::Type::ARRAY == it1.m_type) {
+        swap(it1.m_array_iterator, it2.m_array_iterator);
+    } else if (Value::Type::OBJECT == it1.m_type) {
+        swap(it1.m_object_iterator, it2.m_object_iterator);
+    } else {
+        Value* tmp = it1.m_value_iterator;
+        it1.m_value_iterator = it2.m_value_iterator;
+        it2.m_value_iterator = tmp;
+    }
 }
 
 Value::const_iterator::const_iterator() :

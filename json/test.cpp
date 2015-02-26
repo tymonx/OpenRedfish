@@ -261,5 +261,12 @@ int main(void) {
         loop(val4);
     }
 
+    json::Value v;
+    R"({"key":"value","number":10})" >> v;
+
+    v["number"] += 1;
+
+    cout << v << json::Value({Pair("a", 2), Pair("s", 2)}) << endl;
+
     return 0;
 }

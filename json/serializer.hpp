@@ -67,6 +67,11 @@ public:
     void set_mode(Mode mode);
     void enable_newline(bool enable = true);
     void set_indent(size_t indent);
+
+    friend String& operator<<(String& str, const Serializer& serializer);
+
+    friend std::ostream& operator<<(std::ostream& os,
+            const Serializer& serializer);
 private:
     String m_serialized;
     size_t m_level;
@@ -82,10 +87,9 @@ private:
     void write_string(const Value& value);
     void write_boolean(const Value& value);
     void write_empty(const Value& value);
-
-    friend std::ostream& operator<<(std::ostream& os,
-            const Serializer& serializer);
 };
+
+String& operator<<(String& str, const Serializer& serializer);
 
 std::ostream& operator<<(std::ostream& os, const Serializer& serializer);
 

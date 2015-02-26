@@ -72,38 +72,34 @@ Deserializer::Deserializer() :
     m_limit(MAX_LIMIT_PER_OBJECT),
     m_error_code(Error::Code::NONE) { }
 
-Deserializer::Deserializer(const char* str) :
-    m_array{},
-    m_begin(str),
-    m_pos(m_begin),
-    m_end((nullptr == m_begin) ? nullptr : m_begin + std::strlen(str)),
-    m_limit(MAX_LIMIT_PER_OBJECT),
-    m_error_code(Error::Code::NONE)
-{
-    parsing();
+Deserializer::Deserializer(const char* str) : Deserializer() {
+    (*this) << str;
 }
 
-Deserializer::Deserializer(const String& str) :
-    m_array{},
-    m_begin(str.data()),
-    m_pos(m_begin),
-    m_end(m_begin + str.size()),
-    m_limit(MAX_LIMIT_PER_OBJECT),
-    m_error_code(Error::Code::NONE)
-{
-    parsing();
+Deserializer::Deserializer(const String& str) : Deserializer() {
+    (*this) << str.c_str();
 }
 
-Deserializer& Deserializer::operator<<(const String& str) {
+Deserializer& Deserializer::operator<<(const char* str) {
     clear_error();
 
-    m_begin = str.data();
-    m_pos = m_begin;
-    m_end = m_begin + str.size();
+    size_t str_size = 0;
+
+    if (nullptr != str) {
+        str_size = std::strlen(str);
+    }
+
+    m_begin = str;
+    m_pos = str;
+    m_end = str + str_size;
 
     parsing();
 
     return *this;
+}
+
+Deserializer& Deserializer::operator<<(const String& str) {
+    return (*this) << str.c_str();
 }
 
 Deserializer& Deserializer::operator>>(Value& value) {
@@ -115,6 +111,14 @@ Deserializer& Deserializer::operator>>(Value& value) {
     }
 
     return *this;
+}
+
+Deserializer json::operator>>(const char* str, Value& val) {
+    return Deserializer(str) >> val;
+}
+
+Deserializer json::operator>>(const String& str, Value& val) {
+    return Deserializer(str.c_str()) >> val;
 }
 
 bool Deserializer::empty() const {
