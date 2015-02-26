@@ -264,121 +264,82 @@ public:
     friend bool operator<=(const Value&, const Value&);
     friend bool operator>=(const Value&, const Value&);
 
-    class iterator {
+    template<bool is_const = false>
+    class base_iterator {
     public:
-        using iterator_category = std::forward_iterator_tag;
-        using difference_type = std::ptrdiff_t;
         using value_type = Value;
-        using reference = Value&;
-        using pointer = Value*;
-        using size_type = std::size_t;
+        using difference_type = std::ptrdiff_t;
+        using pointer = typename std::conditional<is_const,
+              const value_type*, value_type*>::type;
+        using reference = typename std::conditional<is_const,
+              const value_type&, value_type&>::type;
+        using iterator_category = std::random_access_iterator_tag;
+        using array_iterator = typename std::conditional<is_const,
+              Array::const_iterator, Array::iterator>::type;
+        using object_iterator = typename std::conditional<is_const,
+              Object::const_iterator, Object::iterator>::type;
 
-        iterator();
+        base_iterator();
 
-        iterator(Value& it);
+        base_iterator(reference it);
 
-        iterator(const Array::iterator& it);
+        base_iterator(const array_iterator& it);
 
-        iterator(const Object::iterator& it);
+        base_iterator(const object_iterator& it);
 
         const char* key() const;
 
-        iterator& operator++();
+        base_iterator& operator++();
 
-        iterator operator++(int);
+        base_iterator operator++(int);
 
         reference operator*();
 
         pointer operator->();
 
-        friend bool operator<(const iterator&, const iterator&);
-        friend bool operator>(const iterator&, const iterator&);
-        friend bool operator<=(const iterator&, const iterator&);
-        friend bool operator>=(const iterator&, const iterator&);
+        reference operator[](difference_type);
 
-        iterator& operator+=(size_type);
-        iterator& operator-=(size_type);
+        base_iterator& operator+=(difference_type);
+        base_iterator& operator-=(difference_type);
 
-        friend iterator operator+(const iterator&, size_type);
-        friend iterator operator+(size_type, const iterator&);
+        template<bool T>
+        friend bool operator<(const base_iterator<T>&, const base_iterator<T>&);
+        template<bool T>
+        friend bool operator>(const base_iterator<T>&, const base_iterator<T>&);
+        template<bool T>
+        friend bool operator<=(const base_iterator<T>&, const base_iterator<T>&);
+        template<bool T>
+        friend bool operator>=(const base_iterator<T>&, const base_iterator<T>&);
 
-        friend iterator operator-(const iterator&, size_type);
-        friend difference_type operator-(iterator, iterator);
+        template<bool T>
+        friend base_iterator<T> operator+(const base_iterator<T>&, typename base_iterator<T>::difference_type);
+        template<bool T>
+        friend base_iterator<T> operator+(typename base_iterator<T>::difference_type, const base_iterator<T>&);
 
-        reference operator[](size_type);
+        template<bool T>
+        friend base_iterator<T> operator-(const base_iterator<T>&, typename base_iterator<T>::difference_type);
+        template<bool T>
+        friend typename base_iterator<T>::difference_type operator-(base_iterator<T>, base_iterator<T>);
 
-        friend void swap(iterator&, iterator&);
+        template<bool T>
+        friend bool operator==(const base_iterator<T>&, const base_iterator<T>&);
+        template<bool T>
+        friend bool operator!=(const base_iterator<T>&, const base_iterator<T>&);
 
-        friend bool operator==(const iterator&, const iterator&);
-        friend bool operator!=(const iterator&, const iterator&);
+        template<bool T>
+        friend void swap(base_iterator<T>&, base_iterator<T>&);
     private:
         Value::Type m_type;
 
         union {
             pointer m_value_iterator;
-            Array::iterator m_array_iterator;
-            Object::iterator m_object_iterator;
+            array_iterator m_array_iterator;
+            object_iterator m_object_iterator;
         };
     };
 
-    class const_iterator {
-    public:
-        using iterator_category = std::forward_iterator_tag;
-        using difference_type = std::ptrdiff_t;
-        using value_type = Value;
-        using reference = const Value&;
-        using pointer = const Value*;
-
-        const_iterator();
-
-        const_iterator(const Value& it);
-
-        const_iterator(const Array::const_iterator& it);
-
-        const_iterator(const Object::const_iterator& it);
-
-        const char* key() const;
-
-        const_iterator& operator++();
-
-        const_iterator operator++(int);
-
-        reference operator*() const;
-
-        pointer operator->() const;
-
-        friend bool operator==(const const_iterator&, const const_iterator&);
-        friend bool operator!=(const const_iterator&, const const_iterator&);
-
-        /*
-        friend bool operator<(const iterator&, const iterator&);
-        friend bool operator>(const iterator&, const iterator&);
-        friend bool operator<=(const iterator&, const iterator&);
-        friend bool operator>=(const iterator&, const iterator&);
-
-        iterator& operator+=(size_type);
-        iterator& operator-=(size_type);
-
-        friend iterator operator+(const iterator&, size_type);
-        friend iterator operator+(size_type, const iterator&);
-
-        friend iterator operator-(const iterator&, size_type);
-        friend difference_type operator-(iterator, iterator);
-
-        reference operator[](size_type);
-
-        friend void swap(iterator&, iterator&);
-
-        */
-    private:
-        Value::Type m_type;
-
-        union {
-            pointer m_value_const_iterator;
-            Array::const_iterator m_array_const_iterator;
-            Object::const_iterator m_object_const_iterator;
-        };
-    };
+    using iterator = base_iterator<false>;
+    using const_iterator = base_iterator<true>;
 
     iterator begin();
 
@@ -406,23 +367,38 @@ private:
     void create_container(Type type);
 };
 
-bool operator==(const Value::iterator&, const Value::iterator&);
-bool operator!=(const Value::iterator&, const Value::iterator&);
-bool operator<(const Value::iterator&, const Value::iterator&);
-bool operator>(const Value::iterator&, const Value::iterator&);
-bool operator<=(const Value::iterator&, const Value::iterator&);
-bool operator>=(const Value::iterator&, const Value::iterator&);
+template<bool is_const>
+bool operator==(const Value::base_iterator<is_const>&, const Value::base_iterator<is_const>&);
 
-Value::iterator operator+(const Value::iterator&, Value::iterator::size_type);
-Value::iterator operator+(Value::iterator::size_type, const Value::iterator&);
+template<bool is_const>
+bool operator!=(const Value::base_iterator<is_const>&, const Value::base_iterator<is_const>&);
 
-Value::iterator operator-(const Value::iterator&, Value::iterator::size_type);
-Value::iterator::difference_type operator-(Value::iterator, Value::iterator);
+template<bool is_const>
+bool operator<(const Value::base_iterator<is_const>&, const Value::base_iterator<is_const>&);
 
-void swap(Value::iterator&, Value::iterator&);
+template<bool is_const>
+bool operator>(const Value::base_iterator<is_const>&, const Value::base_iterator<is_const>&);
 
-bool operator==(const Value::const_iterator&, const Value::const_iterator&);
-bool operator!=(const Value::const_iterator&, const Value::const_iterator&);
+template<bool is_const>
+bool operator<=(const Value::base_iterator<is_const>&, const Value::base_iterator<is_const>&);
+
+template<bool is_const>
+bool operator>=(const Value::base_iterator<is_const>&, const Value::base_iterator<is_const>&);
+
+template<bool is_const>
+Value::base_iterator<is_const> operator+(const Value::base_iterator<is_const>&, typename Value::base_iterator<is_const>::difference_type);
+
+template<bool is_const>
+Value::base_iterator<is_const> operator+(typename Value::base_iterator<is_const>::difference_type, const Value::base_iterator<is_const>&);
+
+template<bool is_const>
+Value::base_iterator<is_const> operator-(const Value::base_iterator<is_const>&, typename Value::base_iterator<is_const>::difference_type);
+
+template<bool is_const>
+typename Value::base_iterator<is_const>::difference_type operator-(Value::base_iterator<is_const>, Value::base_iterator<is_const>);
+
+template<bool is_const>
+void swap(Value::base_iterator<is_const>&, Value::base_iterator<is_const>&);
 
 bool operator==(const Value&, const Value&);
 bool operator!=(const Value&, const Value&);
