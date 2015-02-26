@@ -41,9 +41,19 @@
 #include "serializer.hpp"
 #include "deserializer.hpp"
 
+#include <functional>
 #include <iostream>
 
 using namespace std;
+
+void loop(const json::Value& val);
+
+void loop(const json::Value& val) {
+    for (auto it = val.cbegin(); val.cend() != it; it++) {
+        cout << "Key: " << it.key() << " type: " << int(it->get_type()) << endl;
+        loop(*it);
+    }
+}
 
 int main(void) {
     json::Value val("Test");
@@ -237,10 +247,18 @@ int main(void) {
         cout << "Error: " << error.decode() << std::endl;
     }
 
+    json::Deserializer deserializer_copy(deserializer);
+
     cout << "Deserializer: ";
     while (!deserializer.empty()) {
         deserializer >> val4;
         cout << json::Serializer(val4, json::Serializer::Mode::PRETTY) << endl;
+    }
+
+    while (!deserializer_copy.empty()) {
+        deserializer_copy >> val4;
+        cout << "Keys: " << endl;
+        loop(val4);
     }
 
     return 0;

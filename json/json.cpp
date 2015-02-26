@@ -809,6 +809,13 @@ Value::iterator::reference Value::iterator::operator*() {
     return *operator->();
 }
 
+const char* Value::iterator::key() const {
+    if (Type::OBJECT == m_type) {
+        return m_object_iterator->first.c_str();
+    }
+    return "";
+}
+
 bool json::operator==(const Value::iterator& it1, const Value::iterator& it2) {
     if (it1.m_type != it2.m_type) { return false; }
 
@@ -857,14 +864,14 @@ Value::const_iterator::const_iterator(const Object::const_iterator& it) :
     new (&m_object_const_iterator) Object::const_iterator(it);
 }
 
-const Value::const_iterator& Value::const_iterator::operator++() {
+Value::const_iterator& Value::const_iterator::operator++() {
     if (Type::ARRAY == m_type) { m_array_const_iterator++; }
     else if (Type::OBJECT == m_type) { m_object_const_iterator++; }
     else { m_value_const_iterator++; }
     return *this;
 }
 
-const Value::const_iterator Value::const_iterator::operator++(int) {
+Value::const_iterator Value::const_iterator::operator++(int) {
     const_iterator temp(*this);
     operator++();
     return temp;
@@ -880,6 +887,13 @@ Value::const_iterator::pointer Value::const_iterator::operator->() const {
 
 Value::const_iterator::reference Value::const_iterator::operator*() const {
     return *operator->();
+}
+
+const char* Value::const_iterator::key() const {
+    if (Type::OBJECT == m_type) {
+        return m_object_const_iterator->first.c_str();
+    }
+    return "";
 }
 
 bool json::operator==(const Value::const_iterator& it1,

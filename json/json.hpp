@@ -282,6 +282,8 @@ public:
 
         pointer operator->();
 
+        const char* key() const;
+
         friend bool operator==(const iterator& it1, const iterator& it2);
 
         friend bool operator!=(const iterator& it1, const iterator& it2);
@@ -311,13 +313,15 @@ public:
 
         const_iterator(const Object::const_iterator& it);
 
-        const const_iterator& operator++();
+        const_iterator& operator++();
 
-        const const_iterator operator++(int);
+        const_iterator operator++(int);
 
         reference operator*() const;
 
         pointer operator->() const;
+
+        const char* key() const;
 
         friend bool operator==(const const_iterator& it1,
                 const const_iterator& it2);
