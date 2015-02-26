@@ -58,15 +58,13 @@ using raw_memory = typename std::aligned_storage<sizeof(T),
       std::alignment_of<T>::value>::type;
 
 /*! Create raw aligned memory for Value object and initialize with zeros */
-static const raw_memory<Value> g_null_value_raw{};
+static const raw_memory<Value> g_null_value_raw {};
 
 /*! Omit dereferencing type-punned pointer */
 static const void* g_null_value_ref = &g_null_value_raw;
 
 /*! Now we can cast raw memory to JSON value object */
-static const Value& g_null_value = *reinterpret_cast<const Value*>(
-        g_null_value_ref
-);
+static const Value& g_null_value = *static_cast<const Value*>(g_null_value_ref);
 
 Number::Number() : m_type(Type::INT), m_int(0) { }
 
@@ -413,13 +411,9 @@ size_t Value::size() const {
     case Type::STRING:
         value = m_string.size();
         break;
-    case Type::NUMBER:
-        value = 1;
-        break;
-    case Type::BOOLEAN:
-        value = 1;
-        break;
     case Type::NIL:
+    case Type::NUMBER:
+    case Type::BOOLEAN:
     default:
         value = 0;
         break;
@@ -734,39 +728,27 @@ bool json::operator!=(const Value& val1, const Value& val2) {
 }
 
 Value::iterator Value::begin() {
-    if (is_object()) {
-        return m_object.begin();
-    }
-
-    if (is_array()) {
-        return m_array.begin();
-    }
-
-    return iterator();
+    if (is_array()) { return m_array.begin(); }
+    if (is_object()) { return m_object.begin(); }
+    return *this;
 }
 
 Value::iterator Value::end() {
-    if (is_object()) {
-        return m_object.end();
-    }
-
-    if (is_array()) {
-        return m_array.end();
-    }
-
-    return iterator();
+    if (is_array()) { return m_array.end(); }
+    if (is_object()) { return m_object.end(); }
+    return *this;
 }
 
 Value::const_iterator Value::cbegin() const {
-    if (is_object()) {
-        return m_object.cbegin();
-    }
+    if (is_array()) { return m_array.cbegin(); }
+    if (is_object()) { return m_object.cbegin(); }
+    return *this;
+}
 
-    if (is_array()) {
-        return m_array.cbegin();
-    }
-
-    return const_iterator();
+Value::const_iterator Value::cend() const {
+    if (is_array()) { return m_array.cend(); }
+    if (is_object()) { return m_object.cend(); }
+    return *this;
 }
 
 Value::const_iterator Value::begin() const {
@@ -777,164 +759,149 @@ Value::const_iterator Value::end() const {
     return std::move(cend());
 }
 
-Value::const_iterator Value::cend() const {
-    if (is_object()) {
-        return m_object.cend();
-    }
-
-    if (is_array()) {
-        return m_array.cend();
-    }
-
-    return const_iterator();
+Value::iterator::iterator() :
+    m_type(Type::ARRAY)
+{
+    new (&m_array_iterator) Array::iterator();
 }
 
-Value::BaseIterator::BaseIterator(const Array::iterator& it) :
-    m_type(Value::Type::ARRAY),
-    m_array_iterator(it) { }
+Value::iterator::iterator(Value& it) :
+    m_type(it.m_type),
+    m_value_iterator(&it)
+{ }
 
-Value::BaseIterator::BaseIterator(const Array::const_iterator& it) :
-    m_type(Value::Type::ARRAY),
-    m_array_const_iterator(it) { }
-
-Value::BaseIterator::BaseIterator(const Object::iterator& it) :
-    m_type(Value::Type::OBJECT),
-    m_object_iterator(it) { }
-
-Value::BaseIterator::BaseIterator(const Object::const_iterator& it) :
-    m_type(Value::Type::OBJECT),
-    m_object_const_iterator(it) { }
-
-Value::BaseIterator::~BaseIterator() { }
-
-bool json::operator==(const Value::BaseIterator& it1,
-        const Value::BaseIterator& it2) {
-    if (it1.m_type != it2.m_type) {
-        return false;
-    }
-
-    if (it1.is_object()) {
-        return (it1.m_object_iterator == it2.m_object_iterator);
-    }
-
-    if (it1.is_array()) {
-        return (it1.m_array_iterator == it2.m_array_iterator);
-    }
-
-    return false;
+Value::iterator::iterator(const Array::iterator& it) :
+    m_type(Type::ARRAY),
+    m_array_iterator(it)
+{
+    new (&m_array_iterator) Array::iterator(it);
 }
 
-bool json::operator!=(const Value::BaseIterator& it1,
-        const Value::BaseIterator& it2) {
-    return !(it1 == it2);
+Value::iterator::iterator(const Object::iterator& it) :
+    m_type(Type::OBJECT),
+    m_object_iterator(it)
+{
+    new (&m_object_iterator) Object::iterator(it);
 }
-
-void Value::BaseIterator::increment() {
-    if (is_object()) {
-        m_object_iterator++;
-    } else {
-        m_array_iterator++;
-    }
-}
-
-void Value::BaseIterator::decrement() {
-    if (is_object()) {
-        m_object_iterator--;
-    } else {
-        m_array_iterator--;
-    }
-}
-
-void Value::BaseIterator::const_increment() {
-    if (is_object()) {
-        m_object_const_iterator++;
-    } else {
-        m_array_const_iterator++;
-    }
-}
-
-void Value::BaseIterator::const_decrement() {
-    if (is_object()) {
-        m_object_const_iterator--;
-    } else {
-        m_array_const_iterator--;
-    }
-}
-
-Value& Value::BaseIterator::deref() {
-    if (is_object()) {
-        return m_object_iterator->second;
-    }
-    return *m_array_iterator;
-}
-
-const Value& Value::BaseIterator::const_deref() const {
-    if (is_object()) {
-        return m_object_const_iterator->second;
-    }
-    return *m_array_const_iterator;
-}
-
-bool Value::BaseIterator::is_array() const {
-    return Value::Type::ARRAY == m_type;
-}
-
-bool Value::BaseIterator::is_object() const {
-    return Value::Type::OBJECT == m_type;
-}
-
-Value::iterator::iterator() : BaseIterator(Array::iterator{}) { }
-
-Value::iterator::iterator(const Array::iterator& it) : BaseIterator(it) { }
-
-Value::iterator::iterator(const Object::iterator& it) : BaseIterator(it) { }
-
-Value::iterator::~iterator() { }
 
 Value::iterator& Value::iterator::operator++() {
-    increment();
+    if (Type::ARRAY == m_type) { m_array_iterator++; }
+    else if (Type::OBJECT == m_type) { m_object_iterator++; }
+    else { m_value_iterator++; }
     return *this;
 }
 
 Value::iterator Value::iterator::operator++(int) {
     iterator temp(*this);
-    increment();
+    operator++();
     return temp;
 }
 
-Value::iterator::reference Value::iterator::operator*() {
-    return deref();
-}
-
 Value::iterator::pointer Value::iterator::operator->() {
-    return &deref();
+    pointer ptr;
+    if (Type::ARRAY == m_type) { ptr = &(*m_array_iterator); }
+    else if (Type::OBJECT == m_type) { ptr = &m_object_iterator->second; }
+    else { ptr = m_value_iterator; }
+    return ptr;
 }
 
-Value::const_iterator::const_iterator() : BaseIterator(Array::iterator{}) { }
+Value::iterator::reference Value::iterator::operator*() {
+    return *operator->();
+}
+
+bool json::operator==(const Value::iterator& it1, const Value::iterator& it2) {
+    if (it1.m_type != it2.m_type) { return false; }
+
+    bool result;
+
+    if (Value::Type::ARRAY == it1.m_type) {
+        result = (it1.m_array_iterator == it2.m_array_iterator);
+    }
+    else if (Value::Type::OBJECT == it1.m_type) {
+        result = (it1.m_object_iterator == it2.m_object_iterator);
+    }
+    else {
+        result = (it1.m_value_iterator == it2.m_value_iterator);
+    }
+
+    return result;
+}
+
+bool json::operator!=(const Value::iterator& it1, const Value::iterator& it2) {
+    return !(it1 == it2);
+}
+
+Value::const_iterator::const_iterator() :
+    m_type(Type::ARRAY),
+    m_array_const_iterator()
+{
+    new (&m_array_const_iterator) Array::const_iterator();
+}
+
+Value::const_iterator::const_iterator(const Value& it) :
+    m_type(it.m_type),
+    m_value_const_iterator(&it)
+{ }
 
 Value::const_iterator::const_iterator(const Array::const_iterator& it) :
-    BaseIterator(it) { }
+    m_type(Type::ARRAY),
+    m_array_const_iterator(it)
+{
+    new (&m_array_const_iterator) Array::const_iterator(it);
+}
 
 Value::const_iterator::const_iterator(const Object::const_iterator& it) :
-    BaseIterator(it) { }
-
-Value::const_iterator::~const_iterator() { }
+    m_type(Type::OBJECT),
+    m_object_const_iterator(it)
+{
+    new (&m_object_const_iterator) Object::const_iterator(it);
+}
 
 const Value::const_iterator& Value::const_iterator::operator++() {
-    const_increment();
+    if (Type::ARRAY == m_type) { m_array_const_iterator++; }
+    else if (Type::OBJECT == m_type) { m_object_const_iterator++; }
+    else { m_value_const_iterator++; }
     return *this;
 }
 
 const Value::const_iterator Value::const_iterator::operator++(int) {
     const_iterator temp(*this);
-    const_increment();
+    operator++();
     return temp;
 }
 
-Value::const_iterator::reference Value::const_iterator::operator*() const {
-    return const_deref();
+Value::const_iterator::pointer Value::const_iterator::operator->() const {
+    pointer ptr;
+    if (Type::ARRAY == m_type) { ptr = &(*m_array_const_iterator); }
+    else if (Type::OBJECT == m_type) { ptr = &m_object_const_iterator->second; }
+    else { ptr = m_value_const_iterator; }
+    return ptr;
 }
 
-Value::const_iterator::pointer Value::const_iterator::operator->() const {
-    return &const_deref();
+Value::const_iterator::reference Value::const_iterator::operator*() const {
+    return *operator->();
+}
+
+bool json::operator==(const Value::const_iterator& it1,
+        const Value::const_iterator& it2) {
+    if (it1.m_type != it2.m_type) { return false; }
+
+    bool result;
+
+    if (Value::Type::ARRAY == it1.m_type) {
+        result = (it1.m_array_const_iterator == it2.m_array_const_iterator);
+    }
+    else if (Value::Type::OBJECT == it1.m_type) {
+        result = (it1.m_object_const_iterator == it2.m_object_const_iterator);
+    }
+    else {
+        result = (it1.m_value_const_iterator == it2.m_value_const_iterator);
+    }
+
+    return result;
+}
+
+bool json::operator!=(const Value::const_iterator& it1,
+        const Value::const_iterator& it2) {
+    return !(it1 == it2);
 }

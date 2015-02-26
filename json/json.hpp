@@ -258,56 +258,7 @@ public:
 
     friend bool operator!=(const Value& val1, const Value& val2);
 
-    class BaseIterator {
-    public:
-        friend bool operator==(const BaseIterator& it1,
-                const BaseIterator& it2);
-
-        friend bool operator!=(const Value::BaseIterator& it1,
-            const BaseIterator& it2);
-
-    protected:
-        BaseIterator(const Array::iterator& it);
-
-        BaseIterator(const Array::const_iterator& it);
-
-        BaseIterator(const Object::iterator& it);
-
-        BaseIterator(const Object::const_iterator& it);
-
-        BaseIterator(const BaseIterator&) = default;
-
-        BaseIterator& operator=(const BaseIterator&) = default;
-
-        void increment();
-
-        void decrement();
-
-        void const_increment();
-
-        void const_decrement();
-
-        Value& deref();
-
-        const Value& const_deref() const;
-
-        bool is_array() const;
-
-        bool is_object() const;
-
-        virtual ~BaseIterator();
-    private:
-        Value::Type m_type;
-
-        union {
-            Array::iterator m_array_iterator;
-            Array::const_iterator m_array_const_iterator;
-            Object::iterator m_object_iterator;
-            Object::const_iterator m_object_const_iterator;
-        };
-    };
-
-    class iterator : public BaseIterator {
+    class iterator {
     public:
         using iterator_category = std::forward_iterator_tag;
         using difference_type = std::ptrdiff_t;
@@ -317,11 +268,11 @@ public:
 
         iterator();
 
+        iterator(Value& it);
+
         iterator(const Array::iterator& it);
 
         iterator(const Object::iterator& it);
-
-        iterator(const iterator&) = default;
 
         iterator& operator++();
 
@@ -331,10 +282,20 @@ public:
 
         pointer operator->();
 
-        ~iterator();
+        friend bool operator==(const iterator& it1, const iterator& it2);
+
+        friend bool operator!=(const iterator& it1, const iterator& it2);
+    private:
+        Value::Type m_type;
+
+        union {
+            pointer m_value_iterator;
+            Array::iterator m_array_iterator;
+            Object::iterator m_object_iterator;
+        };
     };
 
-    class const_iterator : public BaseIterator {
+    class const_iterator {
     public:
         using iterator_category = std::forward_iterator_tag;
         using difference_type = std::ptrdiff_t;
@@ -344,11 +305,11 @@ public:
 
         const_iterator();
 
+        const_iterator(const Value& it);
+
         const_iterator(const Array::const_iterator& it);
 
         const_iterator(const Object::const_iterator& it);
-
-        const_iterator(const const_iterator&) = default;
 
         const const_iterator& operator++();
 
@@ -358,7 +319,19 @@ public:
 
         pointer operator->() const;
 
-        ~const_iterator();
+        friend bool operator==(const const_iterator& it1,
+                const const_iterator& it2);
+
+        friend bool operator!=(const const_iterator& it1,
+                const const_iterator& it2);
+    private:
+        Value::Type m_type;
+
+        union {
+            pointer m_value_const_iterator;
+            Array::const_iterator m_array_const_iterator;
+            Object::const_iterator m_object_const_iterator;
+        };
     };
 
     iterator begin();
@@ -386,6 +359,20 @@ private:
 
     void create_container(Type type);
 };
+
+bool operator==(const Value& val1, const Value& val2);
+
+bool operator!=(const Value& val1, const Value& val2);
+
+bool operator==(const Value::iterator& it1, const Value::iterator& it2);
+
+bool operator!=(const Value::iterator& it1, const Value::iterator& it2);
+
+bool operator==(const Value::const_iterator& it1,
+        const Value::const_iterator& it2);
+
+bool operator!=(const Value::const_iterator& it1,
+        const Value::const_iterator& it2);
 
 } /* namespace json */
 
