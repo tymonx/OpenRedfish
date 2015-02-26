@@ -470,8 +470,6 @@ size_t Value::size() const {
         value = m_array.size();
         break;
     case Type::STRING:
-        value = m_string.size();
-        break;
     case Type::NIL:
     case Type::NUMBER:
     case Type::BOOLEAN:
@@ -865,65 +863,68 @@ Value::const_iterator Value::end() const {
 }
 
 template<bool is_const>
-Value::base_iterator<is_const>::base_iterator() :
-    m_type(Type::ARRAY)
+base_iterator<is_const>::base_iterator() :
+    m_type(Value::Type::ARRAY)
 {
     new (&m_array_iterator) array_iterator();
 }
 
 template<bool is_const>
-Value::base_iterator<is_const>::base_iterator(reference it) :
-    m_type(it.m_type),
+base_iterator<is_const>::base_iterator(reference it) :
+    m_type(it.get_type()),
     m_value_iterator(&it)
 { }
 
 template<bool is_const>
-Value::base_iterator<is_const>::base_iterator(const array_iterator& it) :
-    m_type(Type::ARRAY),
+base_iterator<is_const>::base_iterator(const array_iterator& it) :
+    m_type(Value::Type::ARRAY),
     m_array_iterator(it)
 {
     new (&m_array_iterator) array_iterator(it);
 }
 
 template<bool is_const>
-Value::base_iterator<is_const>::base_iterator(const object_iterator& it) :
-    m_type(Type::OBJECT),
+base_iterator<is_const>::base_iterator(const object_iterator& it) :
+    m_type(Value::Type::OBJECT),
     m_object_iterator(it)
 {
     new (&m_object_iterator) object_iterator(it);
 }
 
 template<bool is_const>
-Value::base_iterator<is_const>& Value::base_iterator<is_const>::operator++() {
-    if (Type::ARRAY == m_type) { m_array_iterator++; }
-    else if (Type::OBJECT == m_type) { m_object_iterator++; }
+base_iterator<is_const>& base_iterator<is_const>::operator++() {
+    if (Value::Type::ARRAY == m_type) { m_array_iterator++; }
+    else if (Value::Type::OBJECT == m_type) { m_object_iterator++; }
     else { m_value_iterator++; }
     return *this;
 }
 
 template<bool is_const>
-Value::base_iterator<is_const> Value::base_iterator<is_const>::operator++(int) {
+base_iterator<is_const> base_iterator<is_const>::operator++(int) {
     base_iterator temp(*this);
     operator++();
     return temp;
 }
 
 template<bool is_const>
-typename Value::base_iterator<is_const>::pointer Value::base_iterator<is_const>::operator->() {
+typename base_iterator<is_const>::pointer
+base_iterator<is_const>::operator->() {
     pointer ptr;
-    if (Type::ARRAY == m_type) { ptr = &(*m_array_iterator); }
-    else if (Type::OBJECT == m_type) { ptr = &m_object_iterator->second; }
+    if (Value::Type::ARRAY == m_type) { ptr = &(*m_array_iterator); }
+    else if (Value::Type::OBJECT == m_type) { ptr = &m_object_iterator->second; }
     else { ptr = m_value_iterator; }
     return ptr;
 }
 
 template<bool is_const>
-typename Value::base_iterator<is_const>::reference Value::base_iterator<is_const>::operator*() {
+typename base_iterator<is_const>::reference
+base_iterator<is_const>::operator*() {
     return *operator->();
 }
 
 template<bool is_const>
-typename Value::base_iterator<is_const>::reference Value::base_iterator<is_const>::operator[](difference_type n) {
+typename base_iterator<is_const>::reference
+base_iterator<is_const>::operator[](difference_type n) {
     pointer ptr;
 
     if (Value::Type::ARRAY == m_type) {
@@ -938,7 +939,47 @@ typename Value::base_iterator<is_const>::reference Value::base_iterator<is_const
 }
 
 template<bool is_const>
-bool json::operator==(const Value::base_iterator<is_const>& it1, const Value::base_iterator<is_const>& it2) {
+base_iterator<is_const>&
+base_iterator<is_const>::operator+=(difference_type n) {
+    if (Value::Type::ARRAY == m_type) {
+        m_array_iterator += Array::difference_type(n);
+    } else if (Value::Type::OBJECT == m_type) {
+        m_object_iterator += Object::difference_type(n);
+    } else {
+        m_value_iterator += n;
+    }
+
+    return *this;
+}
+
+template<bool is_const>
+base_iterator<is_const>&
+base_iterator<is_const>::operator-=(difference_type n) {
+    if (Value::Type::ARRAY == m_type) {
+        m_array_iterator -= Array::difference_type(n);
+    } else if (Value::Type::OBJECT == m_type) {
+        m_object_iterator -= Object::difference_type(n);
+    } else {
+        m_value_iterator -= n;
+    }
+
+    return *this;
+}
+
+
+
+template<bool is_const>
+const char* base_iterator<is_const>::key() const {
+    if (Value::Type::OBJECT == m_type) {
+        return m_object_iterator->first.c_str();
+    }
+    return "";
+}
+
+template<bool is_const>
+bool json::operator==(
+        const base_iterator<is_const>& it1,
+        const base_iterator<is_const>& it2) {
     if (it1.m_type != it2.m_type) { return false; }
 
     bool result;
@@ -955,12 +996,16 @@ bool json::operator==(const Value::base_iterator<is_const>& it1, const Value::ba
 }
 
 template<bool is_const>
-bool json::operator!=(const Value::base_iterator<is_const>& it1, const Value::base_iterator<is_const>& it2) {
+bool json::operator!=(
+        const base_iterator<is_const>& it1,
+        const base_iterator<is_const>& it2) {
     return !(it1 == it2);
 }
 
 template<bool is_const>
-bool json::operator<(const Value::base_iterator<is_const>& it1, const Value::base_iterator<is_const>& it2) {
+bool json::operator<(
+        const base_iterator<is_const>& it1,
+        const base_iterator<is_const>& it2) {
     if (it1.m_type != it2.m_type) { return false; }
 
     bool result;
@@ -977,50 +1022,30 @@ bool json::operator<(const Value::base_iterator<is_const>& it1, const Value::bas
 }
 
 template<bool is_const>
-bool json::operator>(const Value::base_iterator<is_const>& it1, const Value::base_iterator<is_const>& it2) {
+bool json::operator>(
+        const base_iterator<is_const>& it1,
+        const base_iterator<is_const>& it2) {
     return it2 < it1;
 }
 
 template<bool is_const>
-bool json::operator<=(const Value::base_iterator<is_const>& it1, const Value::base_iterator<is_const>& it2) {
+bool json::operator<=(
+        const base_iterator<is_const>& it1,
+        const base_iterator<is_const>& it2) {
     return !(it2 < it1);
 }
 
 template<bool is_const>
-bool json::operator>=(const Value::base_iterator<is_const>& it1, const Value::base_iterator<is_const>& it2) {
+bool json::operator>=(
+        const base_iterator<is_const>& it1,
+        const base_iterator<is_const>& it2) {
     return !(it1 < it2);
 }
 
 template<bool is_const>
-Value::base_iterator<is_const>& Value::base_iterator<is_const>::operator+=(difference_type n) {
-    if (Value::Type::ARRAY == m_type) {
-        m_array_iterator += Array::difference_type(n);
-    } else if (Value::Type::OBJECT == m_type) {
-        m_object_iterator += Object::difference_type(n);
-    } else {
-        m_value_iterator += n;
-    }
-
-    return *this;
-}
-
-template<bool is_const>
-Value::base_iterator<is_const>& Value::base_iterator<is_const>::operator-=(difference_type n) {
-    if (Value::Type::ARRAY == m_type) {
-        m_array_iterator -= Array::difference_type(n);
-    } else if (Value::Type::OBJECT == m_type) {
-        m_object_iterator -= Object::difference_type(n);
-    } else {
-        m_value_iterator -= n;
-    }
-
-    return *this;
-}
-
-template<bool is_const>
-Value::base_iterator<is_const> json::operator+(const Value::base_iterator<is_const>& it,
-        typename Value::base_iterator<is_const>::difference_type n) {
-    Value::base_iterator<is_const> tmp;
+base_iterator<is_const> json::operator+(const base_iterator<is_const>& it,
+        typename base_iterator<is_const>::difference_type n) {
+    base_iterator<is_const> tmp;
 
     if (Value::Type::ARRAY == it.m_type) {
         tmp = std::move(it.m_array_iterator + Array::difference_type(n));
@@ -1034,15 +1059,16 @@ Value::base_iterator<is_const> json::operator+(const Value::base_iterator<is_con
 }
 
 template<bool is_const>
-Value::base_iterator<is_const> json::operator+(typename Value::base_iterator<is_const>::difference_type n,
-        const Value::base_iterator<is_const>& it) {
+base_iterator<is_const> json::operator+(
+        typename base_iterator<is_const>::difference_type n,
+        const base_iterator<is_const>& it) {
     return it + n;
 }
 
 template<bool is_const>
-Value::base_iterator<is_const> json::operator-(const Value::base_iterator<is_const>& it,
-        typename Value::base_iterator<is_const>::difference_type n) {
-    Value::base_iterator<is_const> tmp;
+base_iterator<is_const> json::operator-(const base_iterator<is_const>& it,
+        typename base_iterator<is_const>::difference_type n) {
+    base_iterator<is_const> tmp;
 
     if (Value::Type::ARRAY == it.m_type) {
         tmp = std::move(it.m_array_iterator - Array::difference_type(n));
@@ -1055,13 +1081,13 @@ Value::base_iterator<is_const> json::operator-(const Value::base_iterator<is_con
     return tmp;
 }
 
-
 template<bool is_const>
-typename Value::base_iterator<is_const>::difference_type json::operator-(Value::base_iterator<is_const> it1,
-        Value::base_iterator<is_const> it2) {
+typename base_iterator<is_const>::difference_type
+json::operator-(base_iterator<is_const> it1,
+        base_iterator<is_const> it2) {
     if (it1.m_type != it2.m_type) { return 0; }
 
-    typename Value::base_iterator<is_const>::difference_type tmp;
+    typename base_iterator<is_const>::difference_type tmp;
 
     if (Value::Type::ARRAY == it1.m_type) {
         tmp = std::move(it2.m_array_iterator - it1.m_array_iterator);
@@ -1075,7 +1101,9 @@ typename Value::base_iterator<is_const>::difference_type json::operator-(Value::
 }
 
 template<bool is_const>
-void json::swap(Value::base_iterator<is_const>& it1, Value::base_iterator<is_const>& it2) {
+void json::swap(
+        json::base_iterator<is_const>& it1,
+        json::base_iterator<is_const>& it2) {
     if (it1.m_type != it2.m_type) { return; }
 
     if (Value::Type::ARRAY == it1.m_type) {
@@ -1089,376 +1117,107 @@ void json::swap(Value::base_iterator<is_const>& it1, Value::base_iterator<is_con
     }
 }
 
-template<bool is_const>
-const char* Value::base_iterator<is_const>::key() const {
-    if (Type::OBJECT == m_type) {
-        return m_object_iterator->first.c_str();
-    }
-    return "";
-}
-
-template class Value::Value::base_iterator<false>;
-template class Value::Value::base_iterator<true>;
+template class json::base_iterator<false>;
+template class json::base_iterator<true>;
 
 template
-bool json::operator==(const Value::base_iterator<true>&, const Value::base_iterator<true>&);
+bool json::operator==(
+        const base_iterator<true>&,
+        const base_iterator<true>&);
 
 template
-bool json::operator!=(const Value::base_iterator<true>&, const Value::base_iterator<true>&);
+bool json::operator!=(
+        const base_iterator<true>&,
+        const base_iterator<true>&);
 
 template
-bool json::operator<(const Value::base_iterator<true>&, const Value::base_iterator<true>&);
+bool json::operator<(
+        const base_iterator<true>&,
+        const base_iterator<true>&);
 
 template
-bool json::operator>(const Value::base_iterator<true>&, const Value::base_iterator<true>&);
+bool json::operator>(
+        const base_iterator<true>&,
+        const base_iterator<true>&);
 
 template
-bool json::operator<=(const Value::base_iterator<true>&, const Value::base_iterator<true>&);
+bool json::operator<=(
+        const base_iterator<true>&,
+        const base_iterator<true>&);
 
 template
-bool json::operator>=(const Value::base_iterator<true>&, const Value::base_iterator<true>&);
+bool json::operator>=(
+        const base_iterator<true>&,
+        const base_iterator<true>&);
 
 template
-Value::base_iterator<true> json::operator+(const Value::base_iterator<true>&, typename Value::base_iterator<true>::difference_type);
+base_iterator<true> json::operator+(
+        const base_iterator<true>&,
+        typename base_iterator<true>::difference_type);
 
 template
-Value::base_iterator<true> json::operator+(typename Value::base_iterator<true>::difference_type, const Value::base_iterator<true>&);
+base_iterator<true> json::operator+(
+        typename base_iterator<true>::difference_type,
+        const base_iterator<true>&);
 
 template
-Value::base_iterator<true> json::operator-(const Value::base_iterator<true>&, typename Value::base_iterator<true>::difference_type);
+base_iterator<true> json::operator-(
+        const base_iterator<true>&,
+        typename base_iterator<true>::difference_type);
 
 template
-typename Value::base_iterator<true>::difference_type json::operator-(Value::base_iterator<true>, Value::base_iterator<true>);
+typename base_iterator<true>::difference_type json::operator-(
+        base_iterator<true>,
+        base_iterator<true>);
 
 template
-bool json::operator==(const Value::base_iterator<false>&, const Value::base_iterator<false>&);
+bool json::operator==(
+        const base_iterator<false>&,
+        const base_iterator<false>&);
 
 template
-bool json::operator!=(const Value::base_iterator<false>&, const Value::base_iterator<false>&);
+bool json::operator!=(
+        const base_iterator<false>&,
+        const base_iterator<false>&);
 
 template
-bool json::operator<(const Value::base_iterator<false>&, const Value::base_iterator<false>&);
+bool json::operator<(
+        const base_iterator<false>&,
+        const base_iterator<false>&);
 
 template
-bool json::operator>(const Value::base_iterator<false>&, const Value::base_iterator<false>&);
+bool json::operator>(
+        const base_iterator<false>&,
+        const base_iterator<false>&);
 
 template
-bool json::operator<=(const Value::base_iterator<false>&, const Value::base_iterator<false>&);
+bool json::operator<=(
+        const base_iterator<false>&,
+        const base_iterator<false>&);
 
 template
-bool json::operator>=(const Value::base_iterator<false>&, const Value::base_iterator<false>&);
+bool json::operator>=(
+        const base_iterator<false>&,
+        const base_iterator<false>&);
 
 template
-Value::base_iterator<false> json::operator+(const Value::base_iterator<false>&, typename Value::base_iterator<false>::difference_type);
+base_iterator<false> json::operator+(
+        const base_iterator<false>&,
+        typename base_iterator<false>::difference_type);
 
 template
-Value::base_iterator<false> json::operator+(typename Value::base_iterator<false>::difference_type, const Value::base_iterator<false>&);
+base_iterator<false> json::operator+(
+        typename base_iterator<false>::difference_type,
+        const base_iterator<false>&);
 
 template
-Value::base_iterator<false> json::operator-(const Value::base_iterator<false>&, typename Value::base_iterator<false>::difference_type);
+base_iterator<false> json::operator-(
+        const base_iterator<false>&,
+        typename base_iterator<false>::difference_type);
 
 template
-typename Value::base_iterator<false>::difference_type json::operator-(Value::base_iterator<false>, Value::base_iterator<false>);
+typename base_iterator<false>::difference_type json::operator-(
+        base_iterator<false>, base_iterator<false>);
 
 template
-void json::swap(Value::base_iterator<false>&, Value::base_iterator<false>&);
-
-
-
-
-
-/**************************************/
-#if 0
-Value::iterator::iterator() :
-    m_type(Type::ARRAY)
-{
-    new (&m_array_iterator) Array::iterator();
-}
-
-Value::iterator::iterator(Value& it) :
-    m_type(it.m_type),
-    m_value_iterator(&it)
-{ }
-
-Value::iterator::iterator(const Array::iterator& it) :
-    m_type(Type::ARRAY),
-    m_array_iterator(it)
-{
-    new (&m_array_iterator) Array::iterator(it);
-}
-
-Value::iterator::iterator(const Object::iterator& it) :
-    m_type(Type::OBJECT),
-    m_object_iterator(it)
-{
-    new (&m_object_iterator) Object::iterator(it);
-}
-
-Value::iterator& Value::iterator::operator++() {
-    if (Type::ARRAY == m_type) { m_array_iterator++; }
-    else if (Type::OBJECT == m_type) { m_object_iterator++; }
-    else { m_value_iterator++; }
-    return *this;
-}
-
-Value::iterator Value::iterator::operator++(int) {
-    iterator temp(*this);
-    operator++();
-    return temp;
-}
-
-Value::iterator::pointer Value::iterator::operator->() {
-    pointer ptr;
-    if (Type::ARRAY == m_type) { ptr = &(*m_array_iterator); }
-    else if (Type::OBJECT == m_type) { ptr = &m_object_iterator->second; }
-    else { ptr = m_value_iterator; }
-    return ptr;
-}
-
-Value::iterator::reference Value::iterator::operator*() {
-    return *operator->();
-}
-
-const char* Value::iterator::key() const {
-    if (Type::OBJECT == m_type) {
-        return m_object_iterator->first.c_str();
-    }
-    return "";
-}
-
-bool json::operator==(const Value::iterator& it1, const Value::iterator& it2) {
-    if (it1.m_type != it2.m_type) { return false; }
-
-    bool result;
-
-    if (Value::Type::ARRAY == it1.m_type) {
-        result = (it1.m_array_iterator == it2.m_array_iterator);
-    } else if (Value::Type::OBJECT == it1.m_type) {
-        result = (it1.m_object_iterator == it2.m_object_iterator);
-    } else {
-        result = (it1.m_value_iterator == it2.m_value_iterator);
-    }
-
-    return result;
-}
-
-bool json::operator!=(const Value::iterator& it1, const Value::iterator& it2) {
-    return !(it1 == it2);
-}
-
-bool json::operator<(const Value::iterator& it1, const Value::iterator& it2) {
-    if (it1.m_type != it2.m_type) { return false; }
-
-    bool result;
-
-    if (Value::Type::ARRAY == it1.m_type) {
-        result = (it1.m_array_iterator < it2.m_array_iterator);
-    } else if (Value::Type::OBJECT == it1.m_type) {
-        result = (it1.m_object_iterator < it2.m_object_iterator);
-    } else {
-        result = (it1.m_value_iterator < it2.m_value_iterator);
-    }
-
-    return result;
-}
-
-bool json::operator>(const Value::iterator& it1, const Value::iterator& it2) {
-    return it2 < it1;
-}
-
-bool json::operator<=(const Value::iterator& it1, const Value::iterator& it2) {
-    return !(it2 < it1);
-}
-
-bool json::operator>=(const Value::iterator& it1, const Value::iterator& it2) {
-    return !(it1 < it2);
-}
-
-Value::iterator& Value::iterator::operator+=(difference_type n) {
-    if (Value::Type::ARRAY == m_type) {
-        m_array_iterator += Array::difference_type(n);
-    } else if (Value::Type::OBJECT == m_type) {
-        m_object_iterator += Object::difference_type(n);
-    } else {
-        m_value_iterator += n;
-    }
-
-    return *this;
-}
-
-Value::iterator& Value::iterator::operator-=(difference_type n) {
-    if (Value::Type::ARRAY == m_type) {
-        m_array_iterator -= Array::difference_type(n);
-    } else if (Value::Type::OBJECT == m_type) {
-        m_object_iterator -= Object::difference_type(n);
-    } else {
-        m_value_iterator -= n;
-    }
-
-    return *this;
-}
-
-Value::iterator json::operator+(const Value::iterator& it,
-        Value::iterator::difference_type n) {
-    Value::iterator tmp;
-
-    if (Value::Type::ARRAY == it.m_type) {
-        tmp = std::move(it.m_array_iterator + Array::difference_type(n));
-    } else if (Value::Type::OBJECT == it.m_type) {
-        tmp = std::move(it.m_object_iterator + Object::difference_type(n));
-    } else {
-        tmp = *(it.m_value_iterator + n);
-    }
-
-    return tmp;
-}
-
-Value::iterator json::operator+(Value::iterator::difference_type n,
-        const Value::iterator& it) {
-    return it + n;
-}
-
-Value::iterator json::operator-(const Value::iterator& it,
-        Value::iterator::difference_type n) {
-    Value::iterator tmp;
-
-    if (Value::Type::ARRAY == it.m_type) {
-        tmp = std::move(it.m_array_iterator - Array::difference_type(n));
-    } else if (Value::Type::OBJECT == it.m_type) {
-        tmp = std::move(it.m_object_iterator - Object::difference_type(n));
-    } else {
-        tmp = *(it.m_value_iterator - n);
-    }
-
-    return tmp;
-}
-
-
-Value::iterator::difference_type json::operator-(Value::iterator it1,
-        Value::iterator it2) {
-    if (it1.m_type != it2.m_type) { return 0; }
-
-    Value::iterator::difference_type tmp;
-
-    if (Value::Type::ARRAY == it1.m_type) {
-        tmp = std::move(it2.m_array_iterator - it1.m_array_iterator);
-    } else if (Value::Type::OBJECT == it1.m_type) {
-        tmp = std::move(it2.m_object_iterator - it1.m_object_iterator);
-    } else {
-        tmp = std::move(it2.m_value_iterator -it1.m_value_iterator);
-    }
-
-    return tmp;
-}
-
-Value::iterator::reference Value::iterator::operator[](difference_type n) {
-    Value::iterator::pointer ptr;
-
-    if (Value::Type::ARRAY == m_type) {
-        ptr = &m_array_iterator[difference_type(n)];
-    } else if (Value::Type::OBJECT == m_type) {
-        ptr = &m_object_iterator[difference_type(n)].second;
-    } else {
-        ptr = &m_value_iterator[n];
-    }
-
-    return *ptr;
-}
-
-void json::swap(Value::iterator& it1, Value::iterator& it2) {
-    if (it1.m_type != it2.m_type) { return; }
-
-    if (Value::Type::ARRAY == it1.m_type) {
-        swap(it1.m_array_iterator, it2.m_array_iterator);
-    } else if (Value::Type::OBJECT == it1.m_type) {
-        swap(it1.m_object_iterator, it2.m_object_iterator);
-    } else {
-        Value* tmp = it1.m_value_iterator;
-        it1.m_value_iterator = it2.m_value_iterator;
-        it2.m_value_iterator = tmp;
-    }
-}
-
-Value::const_iterator::const_iterator() :
-    m_type(Type::ARRAY),
-    m_array_const_iterator()
-{
-    new (&m_array_const_iterator) Array::const_iterator();
-}
-
-Value::const_iterator::const_iterator(const Value& it) :
-    m_type(it.m_type),
-    m_value_const_iterator(&it)
-{ }
-
-Value::const_iterator::const_iterator(const Array::const_iterator& it) :
-    m_type(Type::ARRAY),
-    m_array_const_iterator(it)
-{
-    new (&m_array_const_iterator) Array::const_iterator(it);
-}
-
-Value::const_iterator::const_iterator(const Object::const_iterator& it) :
-    m_type(Type::OBJECT),
-    m_object_const_iterator(it)
-{
-    new (&m_object_const_iterator) Object::const_iterator(it);
-}
-
-Value::const_iterator& Value::const_iterator::operator++() {
-    if (Type::ARRAY == m_type) { m_array_const_iterator++; }
-    else if (Type::OBJECT == m_type) { m_object_const_iterator++; }
-    else { m_value_const_iterator++; }
-    return *this;
-}
-
-Value::const_iterator Value::const_iterator::operator++(int) {
-    const_iterator temp(*this);
-    operator++();
-    return temp;
-}
-
-Value::const_iterator::pointer Value::const_iterator::operator->() const {
-    pointer ptr;
-    if (Type::ARRAY == m_type) { ptr = &(*m_array_const_iterator); }
-    else if (Type::OBJECT == m_type) { ptr = &m_object_const_iterator->second; }
-    else { ptr = m_value_const_iterator; }
-    return ptr;
-}
-
-Value::const_iterator::reference Value::const_iterator::operator*() const {
-    return *operator->();
-}
-
-const char* Value::const_iterator::key() const {
-    if (Type::OBJECT == m_type) {
-        return m_object_const_iterator->first.c_str();
-    }
-    return "";
-}
-
-bool json::operator==(const Value::const_iterator& it1,
-        const Value::const_iterator& it2) {
-    if (it1.m_type != it2.m_type) { return false; }
-
-    bool result;
-
-    if (Value::Type::ARRAY == it1.m_type) {
-        result = (it1.m_array_const_iterator == it2.m_array_const_iterator);
-    }
-    else if (Value::Type::OBJECT == it1.m_type) {
-        result = (it1.m_object_const_iterator == it2.m_object_const_iterator);
-    }
-    else {
-        result = (it1.m_value_const_iterator == it2.m_value_const_iterator);
-    }
-
-    return result;
-}
-
-bool json::operator!=(const Value::const_iterator& it1,
-        const Value::const_iterator& it2) {
-    return !(it1 == it2);
-}
-
-#endif
+void json::swap(base_iterator<false>&, base_iterator<false>&);
