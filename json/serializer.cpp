@@ -43,6 +43,8 @@
 
 #include "serializer.hpp"
 
+#include <sstream>
+
 using namespace json;
 
 const size_t Serializer::DEFAULT_INDENT = 4;
@@ -210,6 +212,8 @@ void Serializer::write_string(const Value& value) {
 }
 
 void Serializer::write_number(const Value& value) {
+    std::stringstream str;
+
     switch (Number(value).get_type()) {
     case Number::Type::INT:
         m_serialized.append(std::to_string(Int(value)));
@@ -218,7 +222,8 @@ void Serializer::write_number(const Value& value) {
         m_serialized.append(std::to_string(Uint(value)));
         break;
     case Number::Type::DOUBLE:
-        m_serialized.append(std::to_string(Double(value)));
+        str << std::scientific << Double(value);
+        m_serialized.append(str.str());
         break;
     default:
         break;
