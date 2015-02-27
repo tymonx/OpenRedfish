@@ -439,6 +439,9 @@ private:
     };
 };
 
+bool operator==(const Number& num1, const Number& num2);
+bool operator!=(const Number& num1, const Number& num2);
+
 bool operator==(const Value&, const Value&);
 bool operator!=(const Value&, const Value&);
 bool operator<(const Value&, const Value&);

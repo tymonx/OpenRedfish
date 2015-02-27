@@ -928,9 +928,9 @@ base_iterator<is_const>::operator[](difference_type n) {
     pointer ptr;
 
     if (Value::Type::ARRAY == m_type) {
-        ptr = &m_array_iterator[difference_type(n)];
+        ptr = &m_array_iterator[n];
     } else if (Value::Type::OBJECT == m_type) {
-        ptr = &m_object_iterator[difference_type(n)].second;
+        ptr = &m_object_iterator[n].second;
     } else {
         ptr = &m_value_iterator[n];
     }
@@ -942,11 +942,15 @@ template<bool is_const>
 base_iterator<is_const>&
 base_iterator<is_const>::operator+=(difference_type n) {
     if (Value::Type::ARRAY == m_type) {
-        m_array_iterator += Array::difference_type(n);
+        m_array_iterator += n;
     } else if (Value::Type::OBJECT == m_type) {
-        m_object_iterator += Object::difference_type(n);
+        m_object_iterator += n;
     } else {
-        m_value_iterator += n;
+        if (n >= 0) {
+            while (n--) { ++m_value_iterator; }
+        } else {
+            while (n++) { --m_value_iterator; }
+        }
     }
 
     return *this;
@@ -956,17 +960,15 @@ template<bool is_const>
 base_iterator<is_const>&
 base_iterator<is_const>::operator-=(difference_type n) {
     if (Value::Type::ARRAY == m_type) {
-        m_array_iterator -= Array::difference_type(n);
+        m_array_iterator += -n;
     } else if (Value::Type::OBJECT == m_type) {
-        m_object_iterator -= Object::difference_type(n);
+        m_object_iterator += -n;
     } else {
-        m_value_iterator -= n;
+        m_value_iterator += -n;
     }
 
     return *this;
 }
-
-
 
 template<bool is_const>
 const char* base_iterator<is_const>::key() const {
@@ -1045,17 +1047,8 @@ bool json::operator>=(
 template<bool is_const>
 base_iterator<is_const> json::operator+(const base_iterator<is_const>& it,
         typename base_iterator<is_const>::difference_type n) {
-    base_iterator<is_const> tmp;
-
-    if (Value::Type::ARRAY == it.m_type) {
-        tmp = std::move(it.m_array_iterator + Array::difference_type(n));
-    } else if (Value::Type::OBJECT == it.m_type) {
-        tmp = std::move(it.m_object_iterator + Object::difference_type(n));
-    } else {
-        tmp = *(it.m_value_iterator + n);
-    }
-
-    return tmp;
+    base_iterator<is_const> tmp = it;
+    return tmp += n;
 }
 
 template<bool is_const>
@@ -1068,36 +1061,25 @@ base_iterator<is_const> json::operator+(
 template<bool is_const>
 base_iterator<is_const> json::operator-(const base_iterator<is_const>& it,
         typename base_iterator<is_const>::difference_type n) {
-    base_iterator<is_const> tmp;
-
-    if (Value::Type::ARRAY == it.m_type) {
-        tmp = std::move(it.m_array_iterator - Array::difference_type(n));
-    } else if (Value::Type::OBJECT == it.m_type) {
-        tmp = std::move(it.m_object_iterator - Object::difference_type(n));
-    } else {
-        tmp = *(it.m_value_iterator - n);
-    }
-
-    return tmp;
+    base_iterator<is_const> tmp = it;
+    return tmp -= n;
 }
 
 template<bool is_const>
 typename base_iterator<is_const>::difference_type
-json::operator-(base_iterator<is_const> it1,
-        base_iterator<is_const> it2) {
+json::operator-(base_iterator<is_const> it2,
+        base_iterator<is_const> it1) {
     if (it1.m_type != it2.m_type) { return 0; }
 
-    typename base_iterator<is_const>::difference_type tmp;
+    typename base_iterator<is_const>::difference_type n = 0;
 
-    if (Value::Type::ARRAY == it1.m_type) {
-        tmp = std::move(it2.m_array_iterator - it1.m_array_iterator);
-    } else if (Value::Type::OBJECT == it1.m_type) {
-        tmp = std::move(it2.m_object_iterator - it1.m_object_iterator);
+    if (it1 < it2) {
+        while (it1 < it2) { ++n; ++it1; }
     } else {
-        tmp = std::move(it2.m_value_iterator -it1.m_value_iterator);
+        while (it2 < it1) { --n; ++it2; }
     }
 
-    return tmp;
+    return n;
 }
 
 template<bool is_const>
