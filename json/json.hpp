@@ -359,6 +359,11 @@ public:
 
     base_iterator();
 
+    base_iterator(const base_iterator& it) = default;
+
+    base_iterator(base_iterator&& it) = default;
+
+    template<typename = typename std::enable_if<is_const>>
     base_iterator(const base_iterator<>& it);
 
     base_iterator(const value_iterator& it);
@@ -373,7 +378,12 @@ public:
 
     bool is_object() const;
 
+    template<typename = typename std::enable_if<is_const>>
     base_iterator& operator=(const base_iterator<>& it);
+
+    base_iterator& operator=(const base_iterator& it) = default;
+
+    base_iterator& operator=(base_iterator&& it) = default;
 
     base_iterator& operator++();
 

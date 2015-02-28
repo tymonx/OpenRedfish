@@ -957,11 +957,39 @@ base_iterator<is_const>::base_iterator() :
     new (&m_array_iterator) array_iterator();
 }
 
-template<bool is_const>
-base_iterator<is_const>::base_iterator(const base_iterator<>& it) :
+namespace json {
+
+template<>
+template<>
+base_iterator<true>::base_iterator(const base_iterator<false>& it) :
     m_type(it.m_type)
 {
-    (*this) = it;
+    if (is_array()) {
+        new (&m_array_iterator) array_iterator(it.m_array_iterator);
+    } else if (is_object()) {
+        new (&m_object_iterator) object_iterator(it.m_object_iterator);
+    } else {
+        new (&m_value_iterator) value_iterator(it.m_value_iterator);
+    }
+}
+
+template<>
+template<>
+base_iterator<true>&
+base_iterator<true>::operator=(const base_iterator<false>& it) {
+    if (m_type != it.m_type) { return *this; }
+
+    if (is_array()) {
+        m_array_iterator = it.m_array_iterator;
+    } else if (is_object()) {
+        m_object_iterator = it.m_object_iterator;
+    } else {
+        m_value_iterator = m_value_iterator;
+    }
+
+    return *this;
+}
+
 }
 
 template<bool is_const>
@@ -993,20 +1021,6 @@ bool base_iterator<is_const>::is_array() const {
 template<bool is_const>
 bool base_iterator<is_const>::is_object() const {
     return Value::Type::OBJECT == m_type;
-}
-
-template<bool is_const>
-base_iterator<is_const>& base_iterator<is_const>::operator=(
-        const base_iterator<>& it) {
-    if (is_array()) {
-        new (&m_array_iterator) array_iterator(it.m_array_iterator);
-    } else if (is_object()) {
-        new (&m_object_iterator) object_iterator(it.m_object_iterator);
-    } else {
-        new (&m_value_iterator) value_iterator(it.m_value_iterator);
-    }
-
-    return *this;
 }
 
 template<bool is_const>
