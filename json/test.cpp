@@ -268,5 +268,10 @@ int main(void) {
 
     cout << v << json::Value({Pair("a", 2), Pair("s", 2)}) << endl;
 
+    auto it1 = v.begin();
+    auto it2 = v.cbegin();
+
+    cout << (json::Value::const_iterator(it1) == it2) << endl;
+
     return 0;
 }
