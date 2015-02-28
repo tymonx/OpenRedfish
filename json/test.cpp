@@ -271,7 +271,7 @@ int main(void) {
     auto it1 = v.begin();
     auto it2 = v.cbegin();
 
-    cout << (json::Value::const_iterator(it1) == it2) << endl;
+    cout << (it1 == it2) << endl;
 
     return 0;
 }

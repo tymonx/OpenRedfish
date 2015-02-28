@@ -958,7 +958,7 @@ base_iterator<is_const>::base_iterator() :
 }
 
 template<bool is_const>
-base_iterator<is_const>::base_iterator(const base_iterator<false>& it) :
+base_iterator<is_const>::base_iterator(const base_iterator<>& it) :
     m_type(it.m_type)
 {
     if (is_array()) {
@@ -970,6 +970,20 @@ base_iterator<is_const>::base_iterator(const base_iterator<false>& it) :
     }
 }
 
+/*
+template<>
+base_iterator<false>::base_iterator(const base_iterator<true>& it) :
+    m_type(it.m_type)
+{
+    if (is_array()) {
+        new (&m_array_iterator) array_iterator(it.m_array_iterator);
+    } else if (is_object()) {
+        new (&m_object_iterator) object_iterator(it.m_object_iterator);
+    } else {
+        new (&m_value_iterator) value_iterator(it.m_value_iterator);
+    }
+}
+*/
 template<bool is_const>
 base_iterator<is_const>::base_iterator(const value_iterator& it) :
     m_type(it->get_type())
@@ -1088,10 +1102,9 @@ const char* base_iterator<is_const>::key() const {
     return "";
 }
 
-template<bool is_const>
 bool json::operator==(
-        const base_iterator<is_const>& it1,
-        const base_iterator<is_const>& it2) {
+        const base_iterator<true>& it1,
+        const base_iterator<true>& it2) {
     if (it1.m_type != it2.m_type) { return false; }
 
     bool result;
@@ -1107,17 +1120,15 @@ bool json::operator==(
     return result;
 }
 
-template<bool is_const>
 bool json::operator!=(
-        const base_iterator<is_const>& it1,
-        const base_iterator<is_const>& it2) {
+        const base_iterator<true>& it1,
+        const base_iterator<true>& it2) {
     return !(it1 == it2);
 }
 
-template<bool is_const>
 bool json::operator<(
-        const base_iterator<is_const>& it1,
-        const base_iterator<is_const>& it2) {
+        const base_iterator<true>& it1,
+        const base_iterator<true>& it2) {
     if (it1.m_type != it2.m_type) { return false; }
 
     bool result;
@@ -1133,55 +1144,52 @@ bool json::operator<(
     return result;
 }
 
-template<bool is_const>
 bool json::operator>(
-        const base_iterator<is_const>& it1,
-        const base_iterator<is_const>& it2) {
+        const base_iterator<true>& it1,
+        const base_iterator<true>& it2) {
     return it2 < it1;
 }
 
-template<bool is_const>
 bool json::operator<=(
-        const base_iterator<is_const>& it1,
-        const base_iterator<is_const>& it2) {
+        const base_iterator<true>& it1,
+        const base_iterator<true>& it2) {
     return !(it2 < it1);
 }
 
-template<bool is_const>
 bool json::operator>=(
-        const base_iterator<is_const>& it1,
-        const base_iterator<is_const>& it2) {
+        const base_iterator<true>& it1,
+        const base_iterator<true>& it2) {
     return !(it1 < it2);
 }
 
-template<bool is_const>
-base_iterator<is_const> json::operator+(const base_iterator<is_const>& it,
-        typename base_iterator<is_const>::difference_type n) {
-    base_iterator<is_const> tmp = it;
+/*
+base_iterator<false> json::operator+(const base_iterator<true>& it,
+        base_iterator<true>::difference_type n) {
+    base_iterator<false> tmp(it);
     return tmp += n;
 }
+*/
 
-template<bool is_const>
-base_iterator<is_const> json::operator+(
-        typename base_iterator<is_const>::difference_type n,
-        const base_iterator<is_const>& it) {
+/*
+base_iterator<false> json::operator+(
+        base_iterator<true>::difference_type n,
+        const base_iterator<true>& it) {
     return it + n;
 }
-
-template<bool is_const>
-base_iterator<is_const> json::operator-(const base_iterator<is_const>& it,
-        typename base_iterator<is_const>::difference_type n) {
-    base_iterator<is_const> tmp = it;
+*/
+/*
+base_iterator<false> json::operator-(const base_iterator<true>& it,
+        base_iterator<true>::difference_type n) {
+    base_iterator<false> tmp(it);
     return tmp -= n;
 }
-
-template<bool is_const>
-typename base_iterator<is_const>::difference_type
-json::operator-(base_iterator<is_const> it2,
-        base_iterator<is_const> it1) {
+*/
+base_iterator<>::difference_type
+json::operator-(base_iterator<true> it2,
+        base_iterator<true> it1) {
     if (it1.m_type != it2.m_type) { return 0; }
 
-    typename base_iterator<is_const>::difference_type n = 0;
+    base_iterator<>::difference_type n = 0;
 
     if (it1 < it2) {
         while (it1 < it2) { ++n; ++it1; }
@@ -1192,10 +1200,9 @@ json::operator-(base_iterator<is_const> it2,
     return n;
 }
 
-template<bool is_const>
 void json::swap(
-        base_iterator<is_const>& it1,
-        base_iterator<is_const>& it2) {
+        base_iterator<>& it1,
+        base_iterator<>& it2) {
     if (it1.m_type != it2.m_type) { return; }
 
     if (Value::Type::ARRAY == it1.m_type) {
@@ -1209,58 +1216,5 @@ void json::swap(
     }
 }
 
-template class json::base_iterator<false>;
+template class json::base_iterator<>;
 template class json::base_iterator<true>;
-
-template
-bool json::operator==(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
-
-template
-bool json::operator!=(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
-
-template
-bool json::operator<(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
-
-template
-bool json::operator>(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
-
-template
-bool json::operator<=(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
-
-template
-bool json::operator>=(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
-
-template
-base_iterator<false> json::operator+(
-        const base_iterator<true>&,
-        typename base_iterator<true>::difference_type);
-
-template
-base_iterator<false> json::operator+(
-        typename base_iterator<true>::difference_type,
-        const base_iterator<true>&);
-
-template
-base_iterator<false> json::operator-(
-        const base_iterator<true>&,
-        typename base_iterator<true>::difference_type);
-
-template
-typename base_iterator<true>::difference_type json::operator-(
-        base_iterator<true>,
-        base_iterator<true>);
-
-template
-void json::swap(base_iterator<false>&, base_iterator<false>&);
