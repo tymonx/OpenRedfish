@@ -139,7 +139,7 @@ void Deserializer::parsing() {
     const char* store_end = m_end;
 
     m_end = m_begin + m_limit;
-    while (read_object(root)) {
+    while (read_object_or_array(root)) {
         m_array.push_back(std::move(root));
 
         const char* tmp_end = m_pos + m_limit;
@@ -211,6 +211,27 @@ Deserializer::Error Deserializer::get_error() const {
 
 bool Deserializer::is_invalid() const {
     return m_pos < m_end;
+}
+
+bool Deserializer::read_object_or_array(Value& value) {
+    if (!read_whitespaces()) { return false; }
+
+    bool ok = false;
+
+    switch (get_char()) {
+    case '{':
+        value = Value::Type::OBJECT;
+        ok = read_object(value);
+        break;
+    case '[':
+        value = Value::Type::ARRAY;
+        ok = read_array(value);
+        break;
+    default:
+        break;
+    }
+
+    return ok;
 }
 
 bool Deserializer::read_object(Value& value) {

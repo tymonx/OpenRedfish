@@ -118,6 +118,7 @@ private:
 
     void parsing();
 
+    bool read_object_or_array(Value& value);
     bool read_object(Value& value);
     bool read_string(Value& value);
     bool read_value(Value& value);

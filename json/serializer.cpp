@@ -83,6 +83,8 @@ Serializer& Serializer::operator<<(const Value& value) {
 
     if (value.is_object() || value.is_null()) {
         write_object(value);
+    } else if (value.is_array()) {
+        write_array(value);
     }
 
     return *this;
