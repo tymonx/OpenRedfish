@@ -326,7 +326,8 @@ base_iterator<is_const> operator+(const base_iterator<is_const>&,
        typename  base_iterator<is_const>::difference_type);
 
 template<bool is_const = false>
-base_iterator<is_const> operator+(typename base_iterator<is_const>::difference_type,
+base_iterator<is_const> operator+(
+        typename base_iterator<is_const>::difference_type,
         const base_iterator<is_const>&);
 
 template<bool is_const = false>

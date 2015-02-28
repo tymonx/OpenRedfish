@@ -1025,8 +1025,8 @@ bool base_iterator<is_const>::is_object() const {
 
 template<bool is_const>
 base_iterator<is_const>& base_iterator<is_const>::operator++() {
-    if (Value::Type::ARRAY == m_type) { m_array_iterator++; }
-    else if (Value::Type::OBJECT == m_type) { m_object_iterator++; }
+    if (is_array()) { m_array_iterator++; }
+    else if (is_object()) { m_object_iterator++; }
     else { m_value_iterator++; }
     return *this;
 }
@@ -1042,8 +1042,8 @@ template<bool is_const>
 typename base_iterator<is_const>::pointer
 base_iterator<is_const>::operator->() const {
     pointer ptr;
-    if (Value::Type::ARRAY == m_type) { ptr = &(*m_array_iterator); }
-    else if (Value::Type::OBJECT == m_type) { ptr = &m_object_iterator->second; }
+    if (is_array()) { ptr = &(*m_array_iterator); }
+    else if (is_object()) { ptr = &m_object_iterator->second; }
     else { ptr = m_value_iterator; }
     return ptr;
 }
@@ -1059,9 +1059,9 @@ typename base_iterator<is_const>::reference
 base_iterator<is_const>::operator[](difference_type n) const {
     pointer ptr;
 
-    if (Value::Type::ARRAY == m_type) {
+    if (is_array()) {
         ptr = &m_array_iterator[n];
-    } else if (Value::Type::OBJECT == m_type) {
+    } else if (is_object()) {
         ptr = &m_object_iterator[n].second;
     } else {
         ptr = &m_value_iterator[n];
@@ -1073,9 +1073,9 @@ base_iterator<is_const>::operator[](difference_type n) const {
 template<bool is_const>
 base_iterator<is_const>&
 base_iterator<is_const>::operator+=(difference_type n) {
-    if (Value::Type::ARRAY == m_type) {
+    if (is_array()) {
         m_array_iterator += n;
-    } else if (Value::Type::OBJECT == m_type) {
+    } else if (is_object()) {
         m_object_iterator += n;
     } else {
         if (n >= 0) {
@@ -1091,9 +1091,9 @@ base_iterator<is_const>::operator+=(difference_type n) {
 template<bool is_const>
 base_iterator<is_const>&
 base_iterator<is_const>::operator-=(difference_type n) {
-    if (Value::Type::ARRAY == m_type) {
+    if (is_array()) {
         m_array_iterator += -n;
-    } else if (Value::Type::OBJECT == m_type) {
+    } else if (is_object()) {
         m_object_iterator += -n;
     } else {
         m_value_iterator += -n;
@@ -1104,7 +1104,7 @@ base_iterator<is_const>::operator-=(difference_type n) {
 
 template<bool is_const>
 const char* base_iterator<is_const>::key() const {
-    if (Value::Type::OBJECT == m_type) {
+    if (is_object()) {
         return m_object_iterator->first.c_str();
     }
     return "";
