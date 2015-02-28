@@ -322,6 +322,18 @@ bool operator<=(const Value&, const Value&);
 bool operator>=(const Value&, const Value&);
 
 template<bool is_const = false>
+base_iterator<is_const> operator+(const base_iterator<is_const>&,
+       typename  base_iterator<is_const>::difference_type);
+
+template<bool is_const = false>
+base_iterator<is_const> operator+(typename base_iterator<is_const>::difference_type,
+        const base_iterator<is_const>&);
+
+template<bool is_const = false>
+base_iterator<is_const> operator-(const base_iterator<is_const>&,
+        typename base_iterator<is_const>::difference_type);
+
+template<bool is_const = false>
 class base_iterator {
 public:
     template<bool B, class T, class F>
@@ -345,8 +357,6 @@ public:
     using object_iterator = conditional_t<is_const,
           Object::const_iterator, Object::iterator>;
 
-    friend Value;
-
     base_iterator();
 
     base_iterator(const base_iterator<>& it);
@@ -363,6 +373,8 @@ public:
 
     bool is_object() const;
 
+    base_iterator& operator=(const base_iterator<>& it);
+
     base_iterator& operator++();
 
     base_iterator operator++(int);
@@ -376,7 +388,9 @@ public:
     base_iterator& operator+=(difference_type);
     base_iterator& operator-=(difference_type);
 
-    friend base_iterator<!is_const>;
+    friend Value;
+
+    friend base_iterator<true>;
 
     friend bool operator<(const base_iterator<true>&,
             const base_iterator<true>&);
@@ -390,19 +404,15 @@ public:
     friend bool operator>=(const base_iterator<true>&,
             const base_iterator<true>&);
 
-    /*
-    friend base_iterator<false> operator+(
-            const base_iterator<true>&,
-            base_iterator<is_const>::difference_type);
+    friend base_iterator operator+<>(const base_iterator&,
+            base_iterator::difference_type);
 
-    friend base_iterator<false> operator+(
-            base_iterator<is_const>::difference_type,
-            const base_iterator<true>&);
+    friend base_iterator operator+<>(base_iterator::difference_type,
+            const base_iterator&);
 
-    friend base_iterator<false> operator-(
-            const base_iterator<true>&,
-            base_iterator<is_const>::difference_type);
-*/
+    friend base_iterator operator-<>(const base_iterator&,
+            base_iterator::difference_type);
+
     friend base_iterator::difference_type operator-(
             base_iterator<true>,
             base_iterator<true>);
@@ -426,48 +436,21 @@ private:
     };
 };
 
-bool operator<(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
+bool operator<(const base_iterator<true>&, const base_iterator<true>&);
 
-bool operator==(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
+bool operator==(const base_iterator<true>&, const base_iterator<true>&);
 
-bool operator!=(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
+bool operator!=(const base_iterator<true>&, const base_iterator<true>&);
 
-bool operator<(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
+bool operator<(const base_iterator<true>&, const base_iterator<true>&);
 
-bool operator>(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
+bool operator>(const base_iterator<true>&, const base_iterator<true>&);
 
-bool operator<=(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
+bool operator<=(const base_iterator<true>&, const base_iterator<true>&);
 
-bool operator>=(
-        const base_iterator<true>&,
-        const base_iterator<true>&);
+bool operator>=(const base_iterator<true>&, const base_iterator<true>&);
 
-base_iterator<> operator+(
-        const base_iterator<true>&,
-        base_iterator<>::difference_type);
-
-base_iterator<> operator+(
-        base_iterator<true>::difference_type,
-        const base_iterator<true>&);
-
-base_iterator<> operator-(
-        const base_iterator<true>&,
-        base_iterator<>::difference_type);
-
-base_iterator<>::difference_type operator-(
-        base_iterator<true>,
+base_iterator<>::difference_type operator-(base_iterator<true>,
         base_iterator<true>);
 
 void swap(base_iterator<>&, base_iterator<>&);
