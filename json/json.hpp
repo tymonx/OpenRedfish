@@ -46,6 +46,7 @@
 
 #include "value.hpp"
 #include "number.hpp"
+#include "iterator.hpp"
 #include "serializer.hpp"
 #include "deserializer.hpp"
 

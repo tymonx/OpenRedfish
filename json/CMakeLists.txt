@@ -34,6 +34,7 @@ set(SOURCES
 add_library(jsonc++ STATIC
     value.cpp
     number.cpp
+    iterator.cpp
     serializer.cpp
     deserializer.cpp
 )
