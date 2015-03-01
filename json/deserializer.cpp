@@ -105,7 +105,8 @@ Deserializer& Deserializer::operator<<(const String& str) {
 Deserializer& Deserializer::operator>>(Value& value) {
     if (m_array.empty()) {
         value = Value::Type::NIL;
-    } else {
+    }
+    else {
         value = std::move(m_array.back());
         m_array.pop_back();
     }
@@ -200,7 +201,8 @@ Deserializer::Error Deserializer::get_error() const {
         if ('\n' == *search) {
             ++error.line;
             error.column = 1;
-        } else {
+        }
+        else {
             ++error.column;
         }
         search++;
@@ -235,12 +237,12 @@ bool Deserializer::read_object_or_array(Value& value) {
 }
 
 bool Deserializer::read_object(Value& value) {
-    Value key;
-
     if (!read_curly_open()) { return false; }
     value = Value::Type::OBJECT;
     if (read_curly_close()) { return true; }
     clear_error();
+
+    Value key;
 
     do {
         if (!read_string(key)) { return false; }
@@ -251,18 +253,20 @@ bool Deserializer::read_object(Value& value) {
 }
 
 bool Deserializer::read_string(Value& value) {
-    String str;
-
     if (!read_quote()) { return false; }
+
+    String str;
 
     while (!is_end()) {
         if ('\\' == get_char()) {
             next_char();
             if (!read_string_escape(str)) { return false; };
-        } else if ('"' != get_char()) {
+        }
+        else if ('"' != get_char()) {
             str.push_back(get_char());
             next_char();
-        } else {
+        }
+        else {
             value = std::move(str);
             next_char();
             return true;
@@ -332,19 +336,25 @@ bool Deserializer::read_string_escape_code(String& str) {
         surrogate.first = code;
         if ((SURROGATE_MIN <= surrogate) && (surrogate <= SURROGATE_MAX)) {
             code = decode_utf16_surrogate_pair(surrogate);
-        } else { back_chars(ESCAPE_HEX_DIGITS_SIZE); }
+        }
+        else {
+            back_chars(ESCAPE_HEX_DIGITS_SIZE);
+        }
     }
 
     if (code < 0x80) {
         str.push_back(char(code));
-    } else if (code < 0x800) {
+    }
+    else if (code < 0x800) {
         str.push_back(char(0xC0 | (0x1F & (code >>  6))));
         str.push_back(char(0x80 | (0x3F & (code >>  0))));
-    } else if (code < 0x10000) {
+    }
+    else if (code < 0x10000) {
         str.push_back(char(0xE0 | (0x0F & (code >> 12))));
         str.push_back(char(0x80 | (0x3F & (code >>  6))));
         str.push_back(char(0x80 | (0x3F & (code >>  0))));
-    } else {
+    }
+    else {
         str.push_back(char(0xF0 | (0x07 & (code >> 18))));
         str.push_back(char(0x80 | (0x3F & (code >> 12))));
         str.push_back(char(0x80 | (0x3F & (code >>  6))));
@@ -417,12 +427,12 @@ bool Deserializer::read_value(Value& value) {
 }
 
 bool Deserializer::read_array(Value& value) {
-    Value array_value;
-
     if (!read_square_open()) { return false; }
     value = Value::Type::ARRAY;
     if (read_square_close()) { return true; }
     clear_error();
+
+    Value array_value;
 
     do {
         if (!read_value(array_value)) { return false; }

@@ -61,9 +61,11 @@ base_iterator<true>::base_iterator(const base_iterator<false>& it) :
 {
     if (is_array()) {
         new (&m_array_iterator) array_iterator(it.m_array_iterator);
-    } else if (is_object()) {
+    }
+    else if (is_object()) {
         new (&m_object_iterator) object_iterator(it.m_object_iterator);
-    } else {
+    }
+    else {
         new (&m_value_iterator) value_iterator(it.m_value_iterator);
     }
 }
@@ -76,12 +78,13 @@ base_iterator<true>::operator=(const base_iterator<false>& it) {
 
     if (is_array()) {
         m_array_iterator = it.m_array_iterator;
-    } else if (is_object()) {
+    }
+    else if (is_object()) {
         m_object_iterator = it.m_object_iterator;
-    } else {
+    }
+    else {
         m_value_iterator = m_value_iterator;
     }
-
     return *this;
 }
 
@@ -120,9 +123,15 @@ bool base_iterator<is_const>::is_object() const {
 
 template<bool is_const>
 base_iterator<is_const>& base_iterator<is_const>::operator++() {
-    if (is_array()) { m_array_iterator++; }
-    else if (is_object()) { m_object_iterator++; }
-    else { m_value_iterator++; }
+    if (is_array()) {
+        m_array_iterator++;
+    }
+    else if (is_object()) {
+        m_object_iterator++;
+    }
+    else {
+        m_value_iterator++;
+    }
     return *this;
 }
 
@@ -137,9 +146,15 @@ template<bool is_const>
 typename base_iterator<is_const>::pointer
 base_iterator<is_const>::operator->() const {
     pointer ptr;
-    if (is_array()) { ptr = &(*m_array_iterator); }
-    else if (is_object()) { ptr = &m_object_iterator->second; }
-    else { ptr = m_value_iterator; }
+    if (is_array()) {
+        ptr = &(*m_array_iterator);
+    }
+    else if (is_object()) {
+        ptr = &m_object_iterator->second;
+    }
+    else {
+        ptr = m_value_iterator;
+    }
     return ptr;
 }
 
@@ -156,9 +171,11 @@ base_iterator<is_const>::operator[](difference_type n) const {
 
     if (is_array()) {
         ptr = &m_array_iterator[n];
-    } else if (is_object()) {
+    }
+    else if (is_object()) {
         ptr = &m_object_iterator[n].second;
-    } else {
+    }
+    else {
         ptr = &m_value_iterator[n];
     }
 
@@ -170,12 +187,15 @@ base_iterator<is_const>&
 base_iterator<is_const>::operator+=(difference_type n) {
     if (is_array()) {
         m_array_iterator += n;
-    } else if (is_object()) {
+    }
+    else if (is_object()) {
         m_object_iterator += n;
-    } else {
+    }
+    else {
         if (n >= 0) {
             while (n--) { ++m_value_iterator; }
-        } else {
+        }
+        else {
             while (n++) { --m_value_iterator; }
         }
     }
@@ -188,9 +208,11 @@ base_iterator<is_const>&
 base_iterator<is_const>::operator-=(difference_type n) {
     if (is_array()) {
         m_array_iterator += -n;
-    } else if (is_object()) {
+    }
+    else if (is_object()) {
         m_object_iterator += -n;
-    } else {
+    }
+    else {
         m_value_iterator += -n;
     }
 
@@ -209,13 +231,15 @@ bool json::operator==(const base_iterator<true>& it1,
         const base_iterator<true>& it2) {
     if (it1.m_type != it2.m_type) { return false; }
 
-    bool result;
+    bool result = false;
 
     if (Value::Type::ARRAY == it1.m_type) {
         result = (it1.m_array_iterator == it2.m_array_iterator);
-    } else if (Value::Type::OBJECT == it1.m_type) {
+    }
+    else if (Value::Type::OBJECT == it1.m_type) {
         result = (it1.m_object_iterator == it2.m_object_iterator);
-    } else {
+    }
+    else {
         result = (it1.m_value_iterator == it2.m_value_iterator);
     }
 
@@ -231,13 +255,15 @@ bool json::operator<(const base_iterator<true>& it1,
         const base_iterator<true>& it2) {
     if (it1.m_type != it2.m_type) { return false; }
 
-    bool result;
+    bool result = false;
 
     if (Value::Type::ARRAY == it1.m_type) {
         result = (it1.m_array_iterator < it2.m_array_iterator);
-    } else if (Value::Type::OBJECT == it1.m_type) {
+    }
+    else if (Value::Type::OBJECT == it1.m_type) {
         result = (it1.m_object_iterator < it2.m_object_iterator);
-    } else {
+    }
+    else {
         result = (it1.m_value_iterator < it2.m_value_iterator);
     }
 
@@ -268,7 +294,8 @@ json::operator-(base_iterator<true> it2,
 
     if (it1 < it2) {
         while (it1 < it2) { ++n; ++it1; }
-    } else {
+    }
+    else {
         while (it2 < it1) { --n; ++it2; }
     }
 
@@ -280,9 +307,11 @@ void json::swap(base_iterator<>& it1, base_iterator<>& it2) {
 
     if (Value::Type::ARRAY == it1.m_type) {
         swap(it1.m_array_iterator, it2.m_array_iterator);
-    } else if (Value::Type::OBJECT == it1.m_type) {
+    }
+    else if (Value::Type::OBJECT == it1.m_type) {
         swap(it1.m_object_iterator, it2.m_object_iterator);
-    } else {
+    }
+    else {
         Value* tmp = it1.m_value_iterator;
         it1.m_value_iterator = it2.m_value_iterator;
         it2.m_value_iterator = tmp;

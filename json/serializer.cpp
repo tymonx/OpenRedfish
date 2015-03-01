@@ -150,7 +150,8 @@ void Serializer::write_object(const Value& value) {
 
         m_serialized.append(m_indent * m_level, ' ');
         m_serialized.push_back('}');
-    } else {
+    }
+    else {
         m_serialized.append("{}");
     }
 }
@@ -202,7 +203,8 @@ void Serializer::write_array(const Value& value) {
 
         m_serialized.append(m_indent * m_level, ' ');
         m_serialized.push_back(']');
-    } else {
+    }
+    else {
         m_serialized.append("[]");
     }
 }

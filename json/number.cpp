@@ -175,5 +175,3 @@ bool json::operator==(const Number& num1, const Number& num2) {
 
     return result;
 }
-
-
