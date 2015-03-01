@@ -32,7 +32,8 @@ set(SOURCES
 )
 
 add_library(jsonc++ STATIC
-    json.cpp
+    value.cpp
+    number.cpp
     serializer.cpp
     deserializer.cpp
 )

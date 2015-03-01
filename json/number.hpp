@@ -36,17 +36,68 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @file json/json.hpp
+ * @file json/number.hpp
  *
- * @brief JSON interface
+ * @brief JSON number interface
  * */
 
-#ifndef _JSON_HPP_
-#define _JSON_HPP_
+#ifndef _JSON_NUMBER_HPP_
+#define _JSON_NUMBER_HPP_
 
-#include "value.hpp"
-#include "number.hpp"
-#include "serializer.hpp"
-#include "deserializer.hpp"
+namespace json {
 
-#endif /* _JSON_HPP_*/
+using Uint = unsigned int;
+using Int = int;
+using Double = double;
+
+class Number {
+public:
+    enum class Type {
+        INT,
+        UINT,
+        DOUBLE
+    };
+
+    Number();
+
+    Number(Int value);
+
+    Number(Uint value);
+
+    Number(Double value);
+
+    Number& operator+=(const Number& number);
+
+    explicit operator Int() const;
+
+    explicit operator Uint() const;
+
+    explicit operator Double() const;
+
+    bool is_int() const;
+
+    bool is_uint() const;
+
+    bool is_double() const;
+
+    Type get_type() const;
+
+    friend bool operator==(const Number& num1, const Number& num2);
+
+    friend bool operator!=(const Number& num1, const Number& num2);
+private:
+    enum Type m_type;
+
+    union {
+        Int m_int;
+        Uint m_uint;
+        Double m_double;
+    };
+};
+
+bool operator==(const Number& num1, const Number& num2);
+bool operator!=(const Number& num1, const Number& num2);
+
+} /* namespace json */
+
+#endif /* _JSON_NUMBER_HPP_ */

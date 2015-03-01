@@ -145,7 +145,8 @@ int main(void) {
 
     deserializer << (R"({"ad":true}   
          
-    {"face1": "\uD83D\uDE02"} [2, 4, 5]
+    {"face1": "\uD83D\uDE02"} [2, 4, 5] [{}] {} [] {  
+                                                   }
     {"face2":"😂" }
     {"face3": "\u01EC"}
 )");
